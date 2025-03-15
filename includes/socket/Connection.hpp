@@ -58,7 +58,6 @@ private:
 
 	// file
 	CGI *cgi_; // dynamic file
-	int static_fd_; // static file
 
 	// buffer
 	std::string rbuff_;
@@ -85,12 +84,11 @@ public:
 
 	// getter
 	int getFd() const;
-	int getStaticFd() const;
 	CGI *getCGI() const;
 	FileTypes getFdType(int fd) const;
 
 	// setter
-	void setReadFd();
+	void setCGI();
 	void setErrorFd(int status_code);
 	void setHttpRequest(MainConf *mainConf);
 	void setHttpResponse();
@@ -101,7 +99,7 @@ public:
 	FileStatus readSocket(MainConf *mainConf);
 	FileStatus processAfterReadCompleted(MainConf *mainConf);
 	FileStatus writeSocket();
-	FileStatus readStaticFile();
+	FileStatus readStaticFile(std::string file_path);
 	FileStatus readCGI();
 	void cleanUp();
 };

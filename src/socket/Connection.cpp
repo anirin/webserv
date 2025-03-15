@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/27 06:48:22 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/15 16:37:59 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,14 +33,12 @@ Connection::Connection(int listenerFd) : ASocket() {
 	std::cout << "[connection] Accepted connection from sin_port = " << addr_.sin_port << std::endl;
 
 	cgi_ = NULL;
-	static_fd_ = -1;
 }
 
 Connection::Connection(const Connection &other) : ASocket(other) {
 	if(this == &other)
 		return;
 	fd_ = other.fd_;
-	static_fd_ = other.static_fd_;
 	cgi_ = other.cgi_;
 	rbuff_ = other.rbuff_;
 	wbuff_ = other.wbuff_;
@@ -59,17 +57,11 @@ int Connection::getFd() const {
 	return fd_;
 }
 
-int Connection::getStaticFd() const {
-	return static_fd_;
-}
-
 CGI *Connection::getCGI() const {
 	return cgi_;
 }
 FileTypes Connection::getFdType(int fd) const {
-	if(fd == static_fd_)
-		return STATIC;
-	else if(cgi_ != NULL && fd == cgi_->getFd())
+	if(cgi_ != NULL && fd == cgi_->getFd())
 		return PIPE;
 	else
 		return SOCKET;
@@ -77,26 +69,15 @@ FileTypes Connection::getFdType(int fd) const {
 
 // ==================================== setter ====================================
 
-void Connection::setReadFd() {
+void Connection::setCGI() {
 	std::string location_path = request_->getLocationPath();
 	int path_size = location_path.size();
-	int fd;
 
-	// todo cgi 呼び出し判定は後方一致でいいのか？
 	if(path_size > 4 && location_path.substr(path_size - 4, 4) == ".php") {
 		CGI *cgi = new CGI(location_path);
 		// todo エラーハンドリング
 		cgi_ = cgi;
 		std::cout << "[connection] cgi is set" << std::endl;
-		return;
-	} else {
-		fd = open(location_path.c_str(), O_RDONLY);
-		if(fd == -1) {
-			std::cerr << "[connection] open failed" << std::endl;
-			throw std::runtime_error("[connection] open failed");
-		}
-		static_fd_ = fd;
-		std::cout << "[connection] static_fd is set" << std::endl;
 		return;
 	}
 }
@@ -118,12 +99,7 @@ void Connection::setErrorFd(int status_code) {
 	}
 
 	std::cout << "[connection] error_page: " << error_page << " is set" << std::endl;
-	int fd = open(error_page.c_str(), O_RDONLY);
-	if(fd == -1) {
-		std::cerr << "[connection] open failed" << std::endl;
-		throw std::runtime_error("[connection] open failed");
-	}
-	static_fd_ = fd;
+	readStaticFile(error_page);
 
 	return;
 }
@@ -135,6 +111,7 @@ void Connection::buildStaticFileResponse() {
 
 	response_ = new HttpResponse();
 	response_->setBody(wbuff_);	  // content length 格納のためにまずは body をセット
+	// todo header のステータスの設定
 	response_->setStartLine(200); // status code は request 段階で確定
 	response_->setHeader(r_header, path, server_name);
 
@@ -199,17 +176,22 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		// を読み込むなら、下のgetの処理と同様に
 		// bodyを必要としないなら、headerを作成して write　の処理を呼び出
 		setErrorFd(404); // 404 決め打ち テスト用
-
+		buildStaticFileResponse();
 		return SUCCESS_STATIC;
 	}
 
 	Method method = request_->getMethod();
 	if(method == GET) {
-		setReadFd();
-		// todo pipeの時にはcgiをセットして、writeを許可する
+		setCGI();
 		if(cgi_ != NULL)
 			return SUCCESS_CGI;
-		return SUCCESS_STATIC;
+		else
+		{
+			std::string file_path = request_->getLocationPath();
+			readStaticFile(file_path);
+			buildStaticFileResponse();
+			return SUCCESS_STATIC;
+		}	
 	} else if(method == POST) {
 		// todo
 	} else if(method == DELETE) {
@@ -241,32 +223,24 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 	return processAfterReadCompleted(mainConf);
 }
 
-FileStatus Connection::readStaticFile() {
-	char buff[buff_size];
-	ssize_t rlen = read(static_fd_, buff, buff_size);
+FileStatus Connection::readStaticFile(std::string file_path) {
+    std::ifstream ifs(file_path.c_str(), std::ios::binary);  // バイナリモード推奨
+    if (!ifs) {
+        std::cerr << "[connection] open file failed" << std::endl;
+        return ERROR;
+    }
 
-	if(rlen < 0) {
-		close(static_fd_);
-		static_fd_ = -1;
-		return ERROR;
-	} else if(rlen == 0) {
-		close(static_fd_);
-		static_fd_ = -1;
-		return SUCCESS;
-	} else if(rlen == buff_size) {
-		wbuff_ += buff;
-		return NOT_COMPLETED;
-	}
-
-	buff[rlen] = '\0';
-	wbuff_ += buff;
-
-	buildStaticFileResponse();
-
-	close(static_fd_);
-	static_fd_ = -1;
-
-	return SUCCESS;
+    // ファイル全体を一度に読み込み
+    wbuff_.assign(std::istreambuf_iterator<char>(ifs), 
+                  std::istreambuf_iterator<char>());
+    
+    if (ifs.bad()) {
+        std::cerr << "[connection] read error" << std::endl;
+        return ERROR;
+    }
+    
+    ifs.close();
+    return SUCCESS;
 }
 
 FileStatus Connection::readCGI() {
@@ -327,10 +301,7 @@ FileStatus Connection::writeSocket() {
 }
 
 void Connection::cleanUp() {
-	if(static_fd_ != -1) {
-		close(static_fd_);
-		static_fd_ = -1;
-	} else if(cgi_ != NULL && cgi_->getFd() != -1) {
+	if(cgi_ != NULL && cgi_->getFd() != -1) {
 		cgi_->killCGI();
 		delete cgi_;
 		cgi_ = NULL;

@@ -41,23 +41,6 @@ int main() {
 	/* Main loop */
 	while(true) {
 		FileStatus file_status;
-		// 空いているfdを全てちょっとづつ読み込む この機構が不要な場合fileを開いた瞬間に読み込めばいい
-		std::vector<Connection *> conns = connections.getConnections();
-		for(std::vector<Connection *>::iterator it = conns.begin(); it != conns.end(); ++it) {
-			if((*it)->getStaticFd() == -1)
-				continue;
-			file_status = (*it)->readStaticFile();
-			if(file_status == ERROR) {
-				epollWrapper.deleteEvent((*it)->getFd());
-				connections.removeConnection((*it)->getFd());
-				close((*it)->getFd());
-				std::cout << "[main.cpp] Error: connection closed" << std::endl;
-			}
-			if(file_status == SUCCESS) {
-				epollWrapper.setEvent((*it)->getFd(), EPOLLOUT);
-				std::cout << "[main.cpp] connection status cleared and closed" << std::endl;
-			}
-		}
 
 		int nfds = epollWrapper.epwait();
 		for(int i = 0; i < nfds; ++i) {
@@ -96,6 +79,10 @@ int main() {
 							connections.removeConnection(target_fd);
 							close(target_fd);
 							std::cout << "[main.cpp] Error: connection closed" << std::endl;
+						}
+						if(file_status == SUCCESS_STATIC) {
+							epollWrapper.setEvent(target_fd, EPOLLOUT);
+							std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 						}
 						if(file_status == SUCCESS_CGI) {
 							epollWrapper.addEvent(conn->getCGI()->getFd());
