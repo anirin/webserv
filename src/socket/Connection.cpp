@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/17 05:16:35 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/17 05:20:09 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,6 +97,8 @@ void Connection::setErrorFd(int status_code) {
 		error_page = "./www/" + page_path;
 		// todo 本来は内部リダイレクト
 	}
+
+	// todo default の error page を設定する
 
 	std::cout << "[connection] error_page: " << error_page << " is set" << std::endl;
 	readStaticFile(error_page);
