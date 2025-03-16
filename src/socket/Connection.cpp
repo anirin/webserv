@@ -6,13 +6,13 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/15 16:37:59 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/17 01:13:01 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Connection.hpp"
 
-std::time_t Connection::timeout_ = 1000;
+std::time_t Connection::timeout_ = 10000;
 ssize_t buff_size = 1024; // todo 持たせ方の検討
 
 // ==================================== constructor and destructor ====================================
@@ -110,7 +110,7 @@ void Connection::buildStaticFileResponse() {
 	std::string server_name = request_->getServerName();
 
 	response_ = new HttpResponse();
-	response_->setBody(wbuff_);	  // content length 格納のためにまずは body をセット
+	response_->setBody(wbuff_); // content length 格納のためにまずは body をセット
 	// todo header のステータスの設定
 	response_->setStartLine(200); // status code は request 段階で確定
 	response_->setHeader(r_header, path, server_name);
@@ -119,11 +119,111 @@ void Connection::buildStaticFileResponse() {
 	std::cout << "[connection] response build" << std::endl;
 }
 
+std::string Connection::buildAutoIndexContent(const std::string &path) {
+	DIR *dir;
+	struct dirent *entry;
+	struct stat file_stat;
+	std::stringstream html;
+
+	// ディレクトリを開く
+	dir = opendir(path.c_str());
+	if(!dir) {
+		std::cerr << "[connection] Cannot open directory: " << path << std::endl;
+		return "Directory cannot be opened.";
+	}
+
+	// HTML生成
+	html << "<html>\r\n"
+		 << "<head><title>Index of " << path << "</title></head>\r\n"
+		 << "<body>\r\n"
+		 << "<h1>Index of " << path << "</h1>\r\n"
+		 << "<hr>\r\n"
+		 << "<pre>\r\n";
+
+	// 親ディレクトリへのリンク
+	html << "<a href=\"../\">../</a>\r\n";
+
+	// ディレクトリ内の各ファイル/フォルダを処理
+	while((entry = readdir(dir)) != NULL) {
+		std::string name = entry->d_name;
+
+		// "."は表示しない
+		if(name == ".")
+			continue;
+
+		// ファイルパスを構築
+		std::string full_path = path;
+		if(path[path.length() - 1] != '/')
+			full_path += "/";
+		full_path += name;
+
+		// ファイル情報を取得
+		if(stat(full_path.c_str(), &file_stat) != 0)
+			continue;
+
+		// ディレクトリ判定
+		bool is_dir = S_ISDIR(file_stat.st_mode);
+
+		// 最終更新日時のフォーマット
+		char time_buf[64];
+		struct tm *tm_info = localtime(&file_stat.st_mtime);
+		strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M", tm_info);
+
+		// エントリ表示（名前、更新日時、サイズ）
+		std::string display_name = name + (is_dir ? "/" : "");
+		html << "<a href=\"" << name << (is_dir ? "/" : "") << "\">" << std::left << std::setw(50) << display_name
+			 << "</a> " << time_buf << "  ";
+
+		// サイズ表示（ディレクトリの場合は表示しない）
+		if(!is_dir) {
+			html << file_stat.st_size;
+		}
+		html << "\r\n";
+	}
+
+	html << "</pre>\r\n"
+		 << "<hr>\r\n"
+		 << "</body>\r\n"
+		 << "</html>\r\n";
+
+	closedir(dir);
+
+	return html.str();
+}
+
+FileStatus Connection::buildRedirectResponse(const std::string& redirectPath) {
+    std::cout << "[connection] building redirect response to: " << redirectPath << std::endl;
+    
+    // リクエストヘッダーを取得
+    std::map<std::string, std::string> r_header = request_->getHeader();
+    
+    response_->setStartLine(302);
+    
+    // Locationヘッダーを追加
+    r_header["Location"] = redirectPath;
+	r_header["Keep-Alive"] = "timeout=60, max=100";
+    
+    // 空のbodyを設定
+    wbuff_ = "";
+    response_->setBody(wbuff_);
+    
+    // ヘッダーの設定
+    response_->setHeader(r_header, "", request_->getServerName());
+    
+    // レスポンス全体を構築
+    wbuff_ = response_->buildResponse();
+    
+    return SUCCESS_STATIC;
+}
+
 void Connection::setHttpRequest(MainConf *mainConf) {
 	request_ = new HttpRequest(rbuff_, mainConf);
+	std::cout << "[connection] debug : request " << request_ << std::endl;
 	conf_value_ = mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
 	std::cout << "[connection] request is set" << std::endl;
 	// std::cout << rbuff_ << std::endl;
+
+	// mainConf->debug_print_conf_value(conf_value_);
 }
 
 void Connection::setHttpResponse() {
@@ -167,6 +267,26 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	setHttpRequest(mainConf);
 	setHttpResponse();
 
+	// config 設定
+	std::string requestPath = request_->getRequestPath();
+    std::string fsPath = getFilesystemPath(requestPath);
+
+    // autoindex処理
+    if (isAutoindexableDirectory(fsPath)) {
+        std::cout << "[connection] autoindex is set" << std::endl;
+        wbuff_ = buildAutoIndexContent(fsPath);
+        buildStaticFileResponse();
+        return SUCCESS_STATIC;
+    }
+
+	// redirect処理
+	std::vector<std::string> redirect = conf_value_._return;
+	if (!redirect.empty() && redirect.size() > 1) {
+		std::string redirectPath = redirect[1];
+		return buildRedirectResponse(redirectPath);
+	}
+
+	// error ハンドリング
 	if(!request_->isValidRequest()) {
 		std::cerr << "[connection] invalid request" << std::endl;
 		// todo
@@ -180,18 +300,19 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		return SUCCESS_STATIC;
 	}
 
+
 	Method method = request_->getMethod();
 	if(method == GET) {
 		setCGI();
 		if(cgi_ != NULL)
 			return SUCCESS_CGI;
-		else
-		{
+		else {
 			std::string file_path = request_->getLocationPath();
+			std::cout << "[connection] file path: " << file_path << std::endl;
 			readStaticFile(file_path);
 			buildStaticFileResponse();
 			return SUCCESS_STATIC;
-		}	
+		}
 	} else if(method == POST) {
 		// todo
 	} else if(method == DELETE) {
@@ -224,23 +345,22 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 }
 
 FileStatus Connection::readStaticFile(std::string file_path) {
-    std::ifstream ifs(file_path.c_str(), std::ios::binary);  // バイナリモード推奨
-    if (!ifs) {
-        std::cerr << "[connection] open file failed" << std::endl;
-        return ERROR;
-    }
+	std::ifstream ifs(file_path.c_str(), std::ios::binary); // バイナリモード推奨
+	if(!ifs) {
+		std::cerr << "[connection] open file failed" << std::endl;
+		return ERROR;
+	}
 
-    // ファイル全体を一度に読み込み
-    wbuff_.assign(std::istreambuf_iterator<char>(ifs), 
-                  std::istreambuf_iterator<char>());
-    
-    if (ifs.bad()) {
-        std::cerr << "[connection] read error" << std::endl;
-        return ERROR;
-    }
-    
-    ifs.close();
-    return SUCCESS;
+	// ファイル全体を一度に読み込み
+	wbuff_.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+
+	if(ifs.bad()) {
+		std::cerr << "[connection] read error" << std::endl;
+		return ERROR;
+	}
+
+	ifs.close();
+	return SUCCESS;
 }
 
 FileStatus Connection::readCGI() {
@@ -330,4 +450,39 @@ std::string mapToString(std::map<std::string, std::string> mapdata) {
 		str += "\r\n";
 	}
 	return str;
+}
+
+std::string Connection::getFilesystemPath(const std::string& requestPath) const {
+    std::string rootPath = conf_value_._root; // ドキュメントルートのパス
+    std::string cleanRequestPath = requestPath;
+    std::string fsPath;
+
+    // ドキュメントルートを設定
+    fsPath = "." + rootPath;
+    
+    // ルートパスの末尾に/がないなら追加
+    if (!fsPath.empty() && fsPath[fsPath.length() - 1] != '/')
+        fsPath += '/';
+    
+    // リクエストパスの先頭の/を削除（もしあれば）
+    if (!cleanRequestPath.empty() && cleanRequestPath[0] == '/')
+        cleanRequestPath = cleanRequestPath.substr(1);
+    
+    // パスを組み合わせる
+    fsPath += cleanRequestPath;
+    
+    std::cout << "[connection] Filesystem path resolved: " << fsPath << std::endl;
+    return fsPath;
+}
+
+bool Connection::isAutoindexableDirectory(const std::string& fsPath) const {
+    struct stat path_stat;
+    
+    // パスがディレクトリかつautoindexが有効か確認
+    if (conf_value_._autoindex && 
+        stat(fsPath.c_str(), &path_stat) == 0 && 
+        S_ISDIR(path_stat.st_mode)) {
+        return true;
+    }
+    return false;
 }

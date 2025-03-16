@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/17 17:52:45 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/27 06:10:06 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/17 01:08:43 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,13 +51,21 @@ void HttpResponse::setHeader(std::map<std::string, std::string> requestHeader, s
 							 std::string server_name) {
 	headers_["Date"] = getDate();
 	headers_["Server"] = server_name;
-	headers_["Content-Type"] = getContentType(path);
+	if (path == "")
+		headers_["Content-Type"] = "text/html";
+	else
+		headers_["Content-Type"] = getContentType(path);
 	headers_["Content-Language"] = requestHeader["Accept-Language"];
-	headers_["Keep-Alive"] = "timeout=5, max=100";
+	if (requestHeader["Keep-Alive"] != "")
+		headers_["Keep-Alive"] = requestHeader["Keep-Alive"];
+	else
+		headers_["Keep-Alive"] = "timeout=5, max=100";
 	headers_["Connection"] = requestHeader["Connection"];
 	std::ostringstream ss;
 	ss << body_.size();
 	headers_["Content-Length"] = ss.str();
+	if (requestHeader["Location"] != "")
+		headers_["Location"] = requestHeader["Location"];
 }
 
 void HttpResponse::setBody(std::string buff) {

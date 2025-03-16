@@ -9,6 +9,7 @@ ServConf::ServConf(std::string content) {
 	_handler_directive["server_name"] = &ServConf::set_server_name;
 	_handler_directive["error_page"] = &ServConf::set_error_page;
 	_handler_directive["client_max_body_size"] = &ServConf::set_client_max_body_size;
+	_handler_directive["root"] = &ServConf::set_root;
 
 	_server_name.clear();
 	_error_page.clear();
@@ -124,6 +125,14 @@ void ServConf::set_client_max_body_size(std::vector<std::string> tokens) {
 	if(tokens.size() != 2)
 		throw std::runtime_error("client_max_body_size value required one");
 	_client_max_body_size = tokens[1];
+}
+
+void ServConf::set_root(std::vector<std::string> tokens) {
+	if(!_root.empty())
+		throw std::runtime_error("root is duplicated");
+	if(tokens.size() != 2)
+		throw std::runtime_error("root value required one");
+	_root = tokens[1];
 }
 
 // handle block
@@ -253,6 +262,7 @@ conf_value_t ServConf::getConfValue(std::string path) {
 	conf_value._server_name = _server_name;
 	conf_value._error_page = _error_page;
 	conf_value._client_max_body_size = _client_max_body_size;
+	conf_value._root = _root;
 
 	try {
 		locConf = select_location(path, _locations);
@@ -266,6 +276,7 @@ conf_value_t ServConf::getConfValue(std::string path) {
 void ServConf::debug_print() {
 	std::cout << "listen: " << _listen.first << ":" << _listen.second << std::endl;
 	std::cout << "server_name: " << _server_name << std::endl;
+	std::cout << "root: " << _root << std::endl;
 	std::cout << "error_page: " << std::endl;
 	for(std::map<int, std::string>::iterator it = _error_page.begin(); it != _error_page.end(); it++) {
 		std::cout << it->first << " : " << it->second << std::endl;
