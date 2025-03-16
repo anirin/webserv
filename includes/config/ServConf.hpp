@@ -15,7 +15,7 @@ private:
 	std::pair<std::string, int> _listen;
 	std::string _server_name;
 	std::map<int, std::string> _error_page;
-	std::string _client_max_body_size;
+	size_t _client_max_body_size;
 	std::string _root;
 
 	// location

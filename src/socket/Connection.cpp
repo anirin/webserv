@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/17 02:11:02 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/17 05:16:35 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,7 +104,7 @@ void Connection::setErrorFd(int status_code) {
 	return;
 }
 
-void Connection::buildStaticFileResponse() {
+void Connection::buildStaticFileResponse(int status_code) {
 	std::map<std::string, std::string> r_header = request_->getHeader();
 	std::string path = request_->getLocationPath();
 	std::string server_name = request_->getServerName();
@@ -112,7 +112,7 @@ void Connection::buildStaticFileResponse() {
 	response_ = new HttpResponse();
 	response_->setBody(wbuff_); // content length 格納のためにまずは body をセット
 	// todo header のステータスの設定
-	response_->setStartLine(200); // status code は request 段階で確定
+	response_->setStartLine(status_code); // status code は request 段階で確定
 	response_->setHeader(r_header, path, server_name);
 
 	wbuff_ = response_->buildResponse();
@@ -229,7 +229,6 @@ FileStatus Connection::buildRedirectResponse(const std::string& redirectPath) {
 
 void Connection::setHttpRequest(MainConf *mainConf) {
 	request_ = new HttpRequest(rbuff_, mainConf);
-	std::cout << "[connection] debug : request " << request_ << std::endl;
 	conf_value_ = mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
 	std::cout << "[connection] request is set" << std::endl;
 	// std::cout << rbuff_ << std::endl;
@@ -270,6 +269,14 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	setHttpRequest(mainConf);
 	setHttpResponse();
 
+	// client max body size check ここで対処すべきか不明だが、とりあえずここで処理（もっと前に処理すべきな気がする）
+	if (rbuff_.size() > conf_value_._client_max_body_size) {
+		std::cerr << "[connection] client max body size exceeded" << std::endl;
+		setErrorFd(413);
+		buildStaticFileResponse(413);
+		return SUCCESS_STATIC;
+	}
+
 	// config 設定
 	std::string requestPath = request_->getRequestPath();
     std::string fsPath = getFilesystemPath(requestPath);
@@ -278,7 +285,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
     if (isAutoindexableDirectory(fsPath)) {
         std::cout << "[connection] autoindex is set" << std::endl;
         wbuff_ = buildAutoIndexContent(fsPath);
-        buildStaticFileResponse();
+        buildStaticFileResponse(200);
         return SUCCESS_STATIC;
     }
 
@@ -299,7 +306,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		// を読み込むなら、下のgetの処理と同様に
 		// bodyを必要としないなら、headerを作成して write　の処理を呼び出
 		setErrorFd(404); // 404 決め打ち テスト用
-		buildStaticFileResponse();
+		buildStaticFileResponse(404);
 		return SUCCESS_STATIC;
 	}
 
@@ -313,7 +320,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 			std::string file_path = request_->getLocationPath();
 			std::cout << "[connection] file path: " << file_path << std::endl;
 			readStaticFile(file_path);
-			buildStaticFileResponse();
+			buildStaticFileResponse(200);
 			return SUCCESS_STATIC;
 		}
 	} else if(method == POST) {

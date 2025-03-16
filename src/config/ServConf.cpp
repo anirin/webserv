@@ -13,7 +13,7 @@ ServConf::ServConf(std::string content) {
 
 	_server_name.clear();
 	_error_page.clear();
-	_client_max_body_size.clear();
+	_client_max_body_size = 1024 * 1024; // default 1MB
 	_locations.clear();
 
 	param(content);
@@ -120,11 +120,23 @@ void ServConf::set_error_page(std::vector<std::string> tokens) {
 }
 
 void ServConf::set_client_max_body_size(std::vector<std::string> tokens) {
-	if(!_client_max_body_size.empty())
-		throw std::runtime_error("client_max_body_size duplicate is duplicated");
-	if(tokens.size() != 2)
-		throw std::runtime_error("client_max_body_size value required one");
-	_client_max_body_size = tokens[1];
+	if(_client_max_body_size != 1024 * 1024) {
+		throw std::runtime_error("client_max_body_size already set");
+	}
+	if(tokens.size() < 2) {
+		throw std::runtime_error("client_max_body_size syntax error");
+	}
+
+	// todo エラーハンドリングの強化
+	if(tokens[1].find("k") != std::string::npos) {
+		tokens[1].erase(tokens[1].size() - 1, 1);
+		_client_max_body_size = my_stoul(tokens[1]) * 1024;
+	} else if(tokens[1].find("m") != std::string::npos) {
+		tokens[1].erase(tokens[1].size() - 1, 1);
+		_client_max_body_size = my_stoul(tokens[1]) * 1024 * 1024;
+	} else {
+		_client_max_body_size = my_stoul(tokens[1]);
+	}
 }
 
 void ServConf::set_root(std::vector<std::string> tokens) {

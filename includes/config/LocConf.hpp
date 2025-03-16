@@ -16,7 +16,7 @@ private:
 	bool _autoindex;
 	std::vector<std::string> _index;
 	std::string _root;
-	std::string _client_max_body_size;
+	size_t _client_max_body_size;
 	std::vector<LocConf> _locations;
 
 	// handler

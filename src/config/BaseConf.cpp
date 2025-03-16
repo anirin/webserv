@@ -1,6 +1,6 @@
 #include "BaseConf.hpp"
 
-int BaseConf::parse_token(std::string conf_content, std::vector<std::string> &tokens, size_t &pos) {
+int BaseConf::parse_token(std::string conf_content, std::vector<std::string>& tokens, size_t& pos) {
 	std::string token;
 	char c;
 
@@ -97,4 +97,36 @@ int BaseConf::parse_token(std::string conf_content, std::vector<std::string> &to
 		return CONF_EOF;
 	}
 	return CONF_ERROR;
+}
+
+// ==================================== utils ====================================
+
+unsigned long my_stoul(const std::string& str) {
+	std::size_t *pos = 0;
+	int base = 10;
+
+	const char* start = str.c_str();
+	char* endptr = 0;
+
+	// errno をリセット
+	errno = 0;
+
+	// strtoul で文字列を unsigned long に変換
+	unsigned long result = std::strtoul(start, &endptr, base);
+
+	// エラーチェック
+	if(start == endptr) {
+		throw std::invalid_argument("my_stoul: no valid conversion could be performed");
+	}
+
+	if(errno == ERANGE) {
+		throw std::out_of_range("my_stoul: value out of range of unsigned long");
+	}
+
+	// pos が指定されている場合、変換が終了した位置を記録
+	if(pos != 0) {
+		*pos = static_cast<std::size_t>(endptr - start);
+	}
+
+	return result;
 }

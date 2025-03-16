@@ -99,7 +99,7 @@ public:
     FileStatus buildRedirectResponse(const std::string& redirectPath);
 
 	// method
-	void buildStaticFileResponse();
+	void buildStaticFileResponse(int status_code);
 	std::string buildAutoIndexContent(const std::string& path);
 	FileStatus readSocket(MainConf *mainConf);
 	FileStatus processAfterReadCompleted(MainConf *mainConf);
