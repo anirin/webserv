@@ -11,7 +11,7 @@ LocConf::LocConf(std::string content, std::string path, LocationType type) : _ty
 	_autoindex = false;
 	_index.clear();
 	_root.clear();
-	_client_max_body_size.clear();
+	_client_max_body_size = 1024 * 1024; // default 1MB
 
 	// init handler directive
 	_handler_directive["limit_except"] = &LocConf::set_limit_except;
@@ -106,8 +106,7 @@ void LocConf::set_limit_except(std::vector<std::string> tokens) {
 		}
 		if(s == "GET" || s == "POST" || s == "DELETE" || s == "PUT")
 			_limit_except.push_back(s);
-		else
-		{
+		else {
 			std::cout << "limit_except: " << s << std::endl;
 			throw std::runtime_error("limit_except syntax error");
 		}
@@ -174,14 +173,24 @@ void LocConf::set_root(std::vector<std::string> tokens) {
 }
 
 void LocConf::set_client_max_body_size(std::vector<std::string> tokens) {
-	if(_client_max_body_size.size() > 0) {
+	if(_client_max_body_size != 1024 * 1024) {
 		throw std::runtime_error("client_max_body_size already set");
 	}
 	if(tokens.size() < 2) {
 		throw std::runtime_error("client_max_body_size syntax error");
 	}
 
-	_client_max_body_size = tokens[1];
+	// todo エラーハンドリングの強化
+	if(tokens[1].find("k") != std::string::npos) {
+		tokens[1].erase(tokens[1].size() - 1, 1);
+		std::cout << "[locconf] tokens[1]: " << tokens[1] << std::endl;
+		_client_max_body_size = my_stoul(tokens[1]) * 1024;
+	} else if(tokens[1].find("m") != std::string::npos) {
+		tokens[1].erase(tokens[1].size() - 1, 1);
+		_client_max_body_size = my_stoul(tokens[1]) * 1024 * 1024;
+	} else {
+		_client_max_body_size = my_stoul(tokens[1]);
+	}
 }
 
 // Getter
@@ -218,7 +227,7 @@ void LocConf::getConfValue(std::string path, conf_value_t &conf_value) {
 		conf_value._index = _index;
 	if(_root.size() > 0)
 		conf_value._root = _root;
-	if(_client_max_body_size.size() > 0)
+	if(_client_max_body_size != 1024 * 1024)
 		conf_value._client_max_body_size = _client_max_body_size;
 
 	LocConf locConf = get_location(path, _locations);

@@ -121,12 +121,12 @@ int main() {
 							epollWrapper.setEvent(
 								conn->getFd(),
 								EPOLLOUT); // 本来はSUCCESS後ではなく、cgi 開始した後に書き込むべき time outも考慮
-							std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
+							std::cout << "[main.cpp] coection event set to EPOLLOUT" << std::endl;
 						}
 						break;
 					default:
 						break;
-				}
+			}
 			}
 		}
 	}

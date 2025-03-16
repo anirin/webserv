@@ -1,13 +1,14 @@
 #pragma once
 
 #include <iostream>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <map>
+#include <cerrno>
+#include <cstdlib>
 
-class BaseConf
-{
+class BaseConf {
 protected:
 	static const int NORMAL = 0;
 	static const int IN_DOUBLE_QUOTE = 1;
@@ -27,24 +28,21 @@ public:
 
 protected:
 	// 共通のトークン解析メソッド
-	int parse_token(std::string conf_content, std::vector<std::string> &tokens,
-					size_t &pos);
+	int parse_token(std::string conf_content, std::vector<std::string> &tokens, size_t &pos);
 
 private:
-	void reset_token_state(int &state, std::string &token, std::vector<std::string> &tokens)
-	{
+	void reset_token_state(int &state, std::string &token, std::vector<std::string> &tokens) {
 		state = NORMAL;
 		tokens.push_back(token);
 		token.clear();
 	}
 };
 
-enum LocationType
-{
+enum LocationType {
 	NON,
-	EQUAL, // =
-	TILDE, // ~
-	TILDE_STAR, // ~*
+	EQUAL,		 // =
+	TILDE,		 // ~
+	TILDE_STAR,	 // ~*
 	CARET_TILDE, // ^~
 };
 
@@ -58,5 +56,7 @@ struct conf_value_t {
 	bool _autoindex;
 	std::vector<std::string> _index;
 	std::string _root;
-	std::string _client_max_body_size;
+	size_t _client_max_body_size;
 };
+
+unsigned long my_stoul(const std::string &str);
