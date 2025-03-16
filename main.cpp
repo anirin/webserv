@@ -101,6 +101,8 @@ int main() {
 							if(file_status == SUCCESS) {
 								epollWrapper.setEvent(target_fd, EPOLLIN);
 								std::cout << "[main.cpp] connection event set to EPOLLIN" << std::endl;
+								// todo 初期化すべき部分は別にあるかも
+								conn->clearValue();
 							}
 						}
 						break;

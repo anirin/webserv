@@ -6,13 +6,13 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/17 01:36:41 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/17 02:11:02 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Connection.hpp"
 
-std::time_t Connection::timeout_ = 10000;
+std::time_t Connection::timeout_ = 100000;
 ssize_t buff_size = 1024; // todo 持たせ方の検討
 
 // ==================================== constructor and destructor ====================================
@@ -201,19 +201,29 @@ FileStatus Connection::buildRedirectResponse(const std::string& redirectPath) {
     
     // Locationヘッダーを追加
     r_header["Location"] = redirectPath;
-	r_header["Keep-Alive"] = "none";
+	// r_header["Keep-Alive"] = "none";
 	r_header["Connection"] = "close";
     
     // 空のbodyを設定
-    wbuff_ = "";
+    std::stringstream body;
+	body << "<html>\r\n"
+		<< "<head><title>302 Found</title></head>\r\n"
+		<< "<body>\r\n"
+		<< "<center><h1>302 Found</h1></center>\r\n"
+		<< "<hr><center>Redirect to: <a href=\"" 
+		<< redirectPath << "\">" << redirectPath << "</a></center>\r\n"
+		<< "</body>\r\n"
+		<< "</html>\r\n";
+
+	wbuff_ = body.str();
     response_->setBody(wbuff_);
     
     // ヘッダーの設定
+	response_->setStartLine(302);
     response_->setHeader(r_header, "", request_->getServerName());
     
     // レスポンス全体を構築
     wbuff_ = response_->buildResponse();
-    
     return SUCCESS_STATIC;
 }
 
@@ -232,15 +242,7 @@ void Connection::setHttpResponse() {
 }
 
 void Connection::clearValue() {
-	// clear cgi
-	rbuff_.clear();
-	wbuff_.clear();
-	delete request_; // 二重解放の可能性あり
-	delete response_;
-	request_ = NULL;
 	response_ = NULL;
-	lastActive_ = 0;
-	timeout_ = 0;
 }
 
 // ==================================== check ==============================================
