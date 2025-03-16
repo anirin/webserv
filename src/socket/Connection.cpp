@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/17 01:13:01 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/17 01:36:41 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -201,7 +201,8 @@ FileStatus Connection::buildRedirectResponse(const std::string& redirectPath) {
     
     // Locationヘッダーを追加
     r_header["Location"] = redirectPath;
-	r_header["Keep-Alive"] = "timeout=60, max=100";
+	r_header["Keep-Alive"] = "none";
+	r_header["Connection"] = "close";
     
     // 空のbodyを設定
     wbuff_ = "";

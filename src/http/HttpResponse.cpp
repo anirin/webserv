@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/17 17:52:45 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/17 01:08:43 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/17 01:36:19 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,10 +56,10 @@ void HttpResponse::setHeader(std::map<std::string, std::string> requestHeader, s
 	else
 		headers_["Content-Type"] = getContentType(path);
 	headers_["Content-Language"] = requestHeader["Accept-Language"];
-	if (requestHeader["Keep-Alive"] != "")
-		headers_["Keep-Alive"] = requestHeader["Keep-Alive"];
-	else
+	if (requestHeader["Keep-Alive"] != "none")
 		headers_["Keep-Alive"] = "timeout=5, max=100";
+	if (requestHeader["Connection"] != "")
+		headers_["Connection"] = requestHeader["Connection"];
 	headers_["Connection"] = requestHeader["Connection"];
 	std::ostringstream ss;
 	ss << body_.size();
