@@ -26,6 +26,9 @@
 #include <cstring>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <sstream>
+#include <iomanip>
 
 #include "ASocket.hpp"
 #include "HttpRequest.hpp"
@@ -93,15 +96,19 @@ public:
 	void setHttpRequest(MainConf *mainConf);
 	void setHttpResponse();
 	void clearValue();
+    FileStatus buildRedirectResponse(const std::string& redirectPath);
 
 	// method
 	void buildStaticFileResponse();
+	std::string buildAutoIndexContent(const std::string& path);
 	FileStatus readSocket(MainConf *mainConf);
 	FileStatus processAfterReadCompleted(MainConf *mainConf);
 	FileStatus writeSocket();
 	FileStatus readStaticFile(std::string file_path);
 	FileStatus readCGI();
 	void cleanUp();
+	std::string getFilesystemPath(const std::string& requestPath) const;
+	bool isAutoindexableDirectory(const std::string& fsPath) const;
 };
 
 std::string vecToString(std::vector<std::string> vec);

@@ -71,57 +71,61 @@ int main() {
 
 				FileTypes type = conn->getFdType(target_fd);
 				switch(type) {
-				case SOCKET:
-					if(current_event.events & EPOLLIN) {
-						file_status = conn->readSocket(&mainConf);
-						if(file_status == ERROR || file_status == CLOSED) {
-							epollWrapper.deleteEvent(target_fd);
-							connections.removeConnection(target_fd);
-							close(target_fd);
-							std::cout << "[main.cpp] Error: connection closed" << std::endl;
+					case SOCKET:
+						if(current_event.events & EPOLLIN) {
+							file_status = conn->readSocket(&mainConf);
+							if(file_status == ERROR || file_status == CLOSED) {
+								epollWrapper.deleteEvent(target_fd);
+								connections.removeConnection(target_fd);
+								close(target_fd);
+								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+							}
+							if(file_status == SUCCESS_STATIC) {
+								epollWrapper.setEvent(target_fd, EPOLLOUT);
+								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
+							}
+							if(file_status == SUCCESS_CGI) {
+								epollWrapper.addEvent(conn->getCGI()->getFd());
+								std::cout << "[main.cpp] CGI event add to epoll" << std::endl;
+								epollWrapper.setEvent(target_fd, EPOLLOUT);
+								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
+							}
+						} else if(current_event.events & EPOLLOUT) {
+							file_status = conn->writeSocket();
+							if(file_status == ERROR) {
+								epollWrapper.deleteEvent(target_fd);
+								connections.removeConnection(target_fd);
+								close(target_fd);
+								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+							}
+							if(file_status == SUCCESS) {
+								epollWrapper.setEvent(target_fd, EPOLLIN);
+								std::cout << "[main.cpp] connection event set to EPOLLIN" << std::endl;
+								// todo 初期化すべき部分は別にあるかも
+								conn->clearValue();
+							}
 						}
-						if(file_status == SUCCESS_STATIC) {
-							epollWrapper.setEvent(target_fd, EPOLLOUT);
-							std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
-						}
-						if(file_status == SUCCESS_CGI) {
-							epollWrapper.addEvent(conn->getCGI()->getFd());
-							std::cout << "[main.cpp] CGI event add to epoll" << std::endl;
-							epollWrapper.setEvent(target_fd, EPOLLOUT);
-							std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
-						}
-					} else if(current_event.events & EPOLLOUT) {
-						file_status = conn->writeSocket();
+						break;
+					case PIPE:
+						conn->readCGI();
 						if(file_status == ERROR) {
 							epollWrapper.deleteEvent(target_fd);
-							connections.removeConnection(target_fd);
 							close(target_fd);
-							std::cout << "[main.cpp] Error: connection closed" << std::endl;
+							epollWrapper.deleteEvent(conn->getFd());
+							connections.removeConnection(conn->getFd());
+							close(conn->getFd());
+							std::cout << "[main.cpp] connection closed" << std::endl;
+						} else if(file_status == SUCCESS) {
+							epollWrapper.deleteEvent(target_fd);
+							close(target_fd);
+							epollWrapper.setEvent(
+								conn->getFd(),
+								EPOLLOUT); // 本来はSUCCESS後ではなく、cgi 開始した後に書き込むべき time outも考慮
+							std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 						}
-						if(file_status == SUCCESS) {
-							epollWrapper.setEvent(target_fd, EPOLLIN);
-							std::cout << "[main.cpp] connection event set to EPOLLIN" << std::endl;
-						}
-					}
-					break;
-				case PIPE:
-					conn->readCGI();
-					if(file_status == ERROR) {
-						epollWrapper.deleteEvent(target_fd);
-						close(target_fd);
-						epollWrapper.deleteEvent(conn->getFd());
-						connections.removeConnection(conn->getFd());
-						close(conn->getFd());
-						std::cout << "[main.cpp] connection closed" << std::endl;
-					} else if(file_status == SUCCESS) {
-						epollWrapper.deleteEvent(target_fd);
-						close(target_fd);
-						epollWrapper.setEvent(conn->getFd(), EPOLLOUT); //本来はSUCCESS後ではなく、cgi 開始した後に書き込むべき time outも考慮
-						std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
-					}
-					break;
-				default:
-					break;
+						break;
+					default:
+						break;
 				}
 			}
 		}

@@ -16,6 +16,7 @@ private:
 	std::string _server_name;
 	std::map<int, std::string> _error_page;
 	std::string _client_max_body_size;
+	std::string _root;
 
 	// location
 	std::vector<LocConf> _locations;
@@ -34,6 +35,7 @@ public:
 	void set_server_name(std::vector<std::string> tokens);
 	void set_error_page(std::vector<std::string> tokens);
 	void set_client_max_body_size(std::vector<std::string> tokens);
+	void set_root(std::vector<std::string> tokens);
 	void handle_location_block(std::vector<std::string> tokens);
 
 	// gettter
