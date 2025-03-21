@@ -109,6 +109,11 @@ public:
 	void cleanUp();
 	std::string getFilesystemPath(const std::string& requestPath) const;
 	bool isAutoindexableDirectory(const std::string& fsPath) const;
+
+	// file upload
+	bool isFileUpload();
+	FileStatus fileUpload();
+	std::string parseMultipartFormData(const std::string& request, const std::string& boundary, std::string& filename, std::string& file_content);
 };
 
 std::string vecToString(std::vector<std::string> vec);
