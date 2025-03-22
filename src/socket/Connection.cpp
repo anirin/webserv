@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/21 10:47:49 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/22 18:32:20 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,7 +228,12 @@ FileStatus Connection::buildRedirectResponse(const std::string &redirectPath) {
 }
 
 void Connection::setHttpRequest(MainConf *mainConf) {
-	request_ = new HttpRequest(rbuff_, mainConf);
+	try {
+		request_ = new HttpRequest(rbuff_, mainConf);
+	} catch(const std::exception &e) {
+		std::cerr << "[connection] Failed to parse request: " << e.what() << std::endl;
+		throw std::runtime_error("Failed to parse request");
+	}
 	conf_value_ = mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
 	std::cout << "[connection] request is set" << std::endl;
 	// std::cout << rbuff_ << std::endl;
@@ -256,9 +261,9 @@ bool Connection::isTimedOut(MainConf *mainConf) {
 
 	setHttpRequest(mainConf);
 	setHttpResponse();
-	response_->setStatusCode(503);
+	response_->setStatusCode(504);
 
-	setErrorFd(503); // 503
+	setErrorFd(504);
 
 	return true;
 }
@@ -266,12 +271,22 @@ bool Connection::isTimedOut(MainConf *mainConf) {
 // ==================================== read and write ====================================
 
 FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
-	setHttpRequest(mainConf);
+	try {
+		setHttpRequest(mainConf);
+	} catch (const std::exception &e) {
+		// 400 Bad Request の処理を行う
+		std::cerr << "[connection] Failed to parse request: " << e.what() << std::endl;
+		setHttpResponse();
+		setErrorFd(400);
+		buildStaticFileResponse(400);
+		return SUCCESS_STATIC;
+	}
 	setHttpResponse();
 
-	std::cout << "[connection] request" << rbuff_ << std::endl;
-
+	// std::cout << "[connection] request" << rbuff_ << std::endl;
 	// client max body size check ここで対処すべきか不明だが、とりあえずここで処理（もっと前に処理すべきな気がする）
+	// 理由:confが欲しいのでここに配置する requset 設置後だと思われる
+	std::cout << rbuff_.size() << " == " << conf_value_._client_max_body_size << std::endl;
 	if(rbuff_.size() > conf_value_._client_max_body_size) {
 		std::cerr << "[connection] client max body size exceeded" << std::endl;
 		setErrorFd(413);
@@ -299,16 +314,10 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	}
 
 	// error ハンドリング
-	if(!request_->isValidRequest()) {
-		std::cerr << "[connection] invalid request" << std::endl;
-		// todo
-		// error 400, 404, 405, 414, 505 はこの段階で確定する
-		// responose_->setResponseStartLine("status code");
-		// 前もって登録をしておく もしも error page
-		// を読み込むなら、下のgetの処理と同様に
-		// bodyを必要としないなら、headerを作成して write　の処理を呼び出
-		setErrorFd(404); // 404 決め打ち テスト用
-		buildStaticFileResponse(404);
+	int status_code = request_->getStatusCode();
+	if (status_code != 200) {
+		setErrorFd(status_code);
+		buildStaticFileResponse(status_code);
 		return SUCCESS_STATIC;
 	}
 
@@ -325,7 +334,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 			return SUCCESS_STATIC;
 		}
 	} else if(method == POST) {
-		// todo content description について
+		// todo CGIの処理を追加する
 		if(isFileUpload())
 		{
 			return fileUpload();
@@ -362,7 +371,7 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 	buff[rlen] = '\0';
 	rbuff_ += buff;
 
-	std::cout << "rbuff: " << rbuff_ << std::endl;
+	// std::cout << "rbuff: " << rbuff_ << std::endl;
 
 	return processAfterReadCompleted(mainConf);
 }

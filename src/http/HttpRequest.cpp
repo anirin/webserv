@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/27 06:08:37 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/22 18:10:53 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ HttpRequest::HttpRequest() {}
 
 HttpRequest::~HttpRequest() {}
 
+// todo error handling が欲しい もしもし失敗した場合は400 bad request を返す
 HttpRequest::HttpRequest(std::string request, MainConf *mainConf) {
 	start_line_.resize(3);
 	start_line_ = parseRequestStartLine(request);
@@ -31,6 +32,9 @@ HttpRequest::HttpRequest(std::string request, MainConf *mainConf) {
 	port_ = server_and_port.substr(pos + 1);
 	request_path_ = start_line_[1];
 	conf_value_ = mainConf->getConfValue(port_, server_name_, request_path_);
+
+	// todo 
+	// throw std::runtime_error("invalid request");
 }
 
 // ==================================== getter ====================================
@@ -156,7 +160,7 @@ bool HttpRequest::isValidPath() {
 	/* in this process, check only the existence of the requested path */
 	/* where error_page exist or not is not checked */
 	/* make requested path that is based wevserv root */
-	// todo location path のロジックは改良する必要あり
+	// todo location path のロジックは改良する必要あり autoindexの場合も考慮する必要あり
 	location_path_ = getLocationPath(request_path_, conf_value_);
 	if(location_path_ == "") {
 		std::cout << "[http request] invalid path" << std::endl;
@@ -165,14 +169,14 @@ bool HttpRequest::isValidPath() {
 	return true;
 }
 
-bool HttpRequest::isValidRequest() {
+int HttpRequest::getStatusCode() {
 	if(!isValidHttpVersion())
-		return false;
+		return 505;
 	if(!isValidHttpMethod())
-		return false;
+		return 405;
 	if(!isValidPath())
-		return false;
-	return true;
+		return 404;
+	return 200;
 }
 
 // ==================================== utils ====================================

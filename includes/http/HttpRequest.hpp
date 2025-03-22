@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:21 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/27 06:06:02 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/22 18:10:49 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,13 +71,12 @@ public:
 	std::string getServerName() const;
 	std::string getPort() const;
 	std::string getRequestPath() const;
-	int getStatusCode() const;
+	int getStatusCode();
 
 	// checker
 	bool isValidHttpVersion();
 	bool isValidHttpMethod();
 	bool isValidPath();
-	bool isValidRequest();
 
 	// utils
 	std::string getLocationPath(std::string request_path, conf_value_t conf_value);
