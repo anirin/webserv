@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/22 18:32:20 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/23 17:05:41 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -346,7 +346,20 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 			return SUCCESS_STATIC;
 		}
 	} else if(method == DELETE) {
-		// todo
+		//すでにファイルが存在するか確認ずみ
+		std::remove(request_->getLocationPath().c_str());
+		std::cout << "delete file" << std::endl;
+		std::string response_body = "<html>\r\n"
+									"<head><title>200 OK</title></head>\r\n"
+									"<body>\r\n"
+									"<h1>200 OK</h1>\r\n"
+									"<p>File deleted successfully</p>\r\n"
+									"</body>\r\n"
+									"</html>\r\n";
+		response_->setBody(response_body);
+		response_->setStartLine(200);
+		response_->setHeader(request_->getHeader(), request_->getLocationPath(), request_->getServerName());
+		return SUCCESS_STATIC;
 	} else {
 		// todo
 	}
