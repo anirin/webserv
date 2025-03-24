@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/23 17:05:41 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/24 18:00:33 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -359,6 +359,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		response_->setBody(response_body);
 		response_->setStartLine(200);
 		response_->setHeader(request_->getHeader(), request_->getLocationPath(), request_->getServerName());
+		wbuff_ = response_->buildResponse();
 		return SUCCESS_STATIC;
 	} else {
 		// todo
