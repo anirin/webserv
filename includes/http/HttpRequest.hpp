@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:21 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/22 18:10:49 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/25 23:14:29 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,7 @@ public:
 
 	// setter
 	void setStatusCode();
+	void setBody(std::string body);
 
 	// getter
 	std::vector<std::string> getStartLine() const;

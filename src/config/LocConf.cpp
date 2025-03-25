@@ -114,7 +114,7 @@ void LocConf::set_limit_except(std::vector<std::string> tokens) {
 }
 
 void LocConf::set_return(std::vector<std::string> tokens) {
-	if (_return.second.size() > 0) {
+	if(_return.second.size() > 0) {
 		throw std::runtime_error("return already set");
 	}
 
@@ -123,22 +123,20 @@ void LocConf::set_return(std::vector<std::string> tokens) {
 	}
 
 	// std::pair<int, std::string> _return;
-	// first token は 200 <= x <= 599 
+	// first token は 200 <= x <= 599
 	int status_code;
 	try {
 		status_code = my_stoul(tokens[1]);
-	} catch (std::invalid_argument &e) {
+	} catch(std::invalid_argument &e) {
 		throw std::runtime_error("return status code is invalid");
-	} catch (std::out_of_range &e) {
-		throw std::runtime_error("return status code is invalid");
-	}
+	} catch(std::out_of_range &e) { throw std::runtime_error("return status code is invalid"); }
 
 	// todo ないものを選んだ時にどうするのか
-	if (status_code < 200 || status_code > 599) {
+	if(status_code < 200 || status_code > 599) {
 		throw std::runtime_error("return status code is invalid");
 	}
 
-	if (tokens[2].find("http://") == 0 || tokens[2].find("https://") == 0) {
+	if(tokens[2].find("http://") == 0 || tokens[2].find("https://") == 0) {
 		_return = std::make_pair(status_code, tokens[2]);
 	} else {
 		throw std::runtime_error("return url is invalid");
@@ -264,7 +262,7 @@ void LocConf::debug_print() {
 	std::cout << "=========================== location block:" << std::endl;
 	std::cout << "path: " << _path << std::endl;
 	std::cout << "limit_except: ";
-	if (_return.first != 0 && _return.second != "") {
+	if(_return.first != 0 && _return.second != "") {
 		std::cout << "return: " << _return.first << " : " << _return.second << std::endl;
 	}
 	std::cout << std::endl;

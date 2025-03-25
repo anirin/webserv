@@ -118,6 +118,9 @@ public:
 	FileStatus readSocket(MainConf *mainConf);
 	FileStatus readCGI();
 	FileStatus writeSocket();
+		// chunked
+	bool isChunked();
+	void setChunkedBody();
 
 };
 
