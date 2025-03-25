@@ -123,6 +123,10 @@ unsigned long my_stoul(const std::string& str) {
 		throw std::out_of_range("my_stoul: value out of range of unsigned long");
 	}
 
+	if (*endptr != '\0') {
+		throw std::invalid_argument("my_stoul: invalid suffix in string");
+	}
+
 	// pos が指定されている場合、変換が終了した位置を記録
 	if(pos != 0) {
 		*pos = static_cast<std::size_t>(endptr - start);
