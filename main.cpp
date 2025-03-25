@@ -28,17 +28,15 @@ std::string getConfContent() {
 }
 
 int main() {
-	/* Load configuration */
+	// todo 引数から config fileをもらう
 	std::string content = getConfContent();
 	MainConf mainConf(content);
 
-	/* Make Listener, EpollWrapper, ConnectionWrapper */
 	Listener listener(8080);
 	EpollWrapper epollWrapper(100);
 	ConnectionWrapper connections;
 	epollWrapper.addEvent(listener.getFd());
 
-	/* Main loop */
 	while(true) {
 		FileStatus file_status;
 
@@ -65,6 +63,7 @@ int main() {
 				if(conn->isTimedOut(&mainConf)) {
 					epollWrapper.deleteEvent(target_fd);
 					connections.removeConnection(target_fd);
+					// todo time out を戻すべき
 					close(target_fd);
 					continue;
 				}
@@ -126,7 +125,7 @@ int main() {
 						break;
 					default:
 						break;
-			}
+				}
 			}
 		}
 	}

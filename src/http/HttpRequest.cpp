@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/22 18:10:53 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/25 14:25:17 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ HttpRequest::HttpRequest(std::string request, MainConf *mainConf) {
 	request_path_ = start_line_[1];
 	conf_value_ = mainConf->getConfValue(port_, server_name_, request_path_);
 
-	// todo 
+	// todo
 	// throw std::runtime_error("invalid request");
 }
 
@@ -143,6 +143,7 @@ bool HttpRequest::isValidHttpVersion() {
 
 /* this process needs to add the process of distinguishing http method */
 bool HttpRequest::isValidHttpMethod() {
+	// todo default は get post delete の３種類
 	std::string method = start_line_[0];
 	std::vector<std::string> limit_except = conf_value_._limit_except;
 

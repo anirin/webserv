@@ -7,7 +7,6 @@ LocConf::LocConf(std::string content, std::string path, LocationType type) : _ty
 	// init
 	_locations.clear();
 	_limit_except.clear();
-	_return.clear();
 	_autoindex = false;
 	_index.clear();
 	_root.clear();
@@ -115,17 +114,32 @@ void LocConf::set_limit_except(std::vector<std::string> tokens) {
 }
 
 void LocConf::set_return(std::vector<std::string> tokens) {
-	if(_return.size() > 0) {
+	if(_return.second.size() > 0) {
 		throw std::runtime_error("return already set");
 	}
-	if(tokens.size() < 2) {
+
+	if(tokens.size() != 3) {
 		throw std::runtime_error("return syntax error");
 	}
 
-	size_t i = 1;
-	while(tokens.size() > i) {
-		_return.push_back(tokens[i]);
-		i++;
+	// std::pair<int, std::string> _return;
+	// first token は 200 <= x <= 599
+	int status_code;
+	try {
+		status_code = my_stoul(tokens[1]);
+	} catch(std::invalid_argument &e) {
+		throw std::runtime_error("return status code is invalid");
+	} catch(std::out_of_range &e) { throw std::runtime_error("return status code is invalid"); }
+
+	// todo ないものを選んだ時にどうするのか
+	if(status_code < 200 || status_code > 599) {
+		throw std::runtime_error("return status code is invalid");
+	}
+
+	if(tokens[2].find("http://") == 0 || tokens[2].find("https://") == 0) {
+		_return = std::make_pair(status_code, tokens[2]);
+	} else {
+		throw std::runtime_error("return url is invalid");
 	}
 }
 
@@ -219,7 +233,7 @@ void LocConf::getConfValue(std::string path, conf_value_t &conf_value) {
 	conf_value._path = _path;
 	if(_limit_except.size() > 0)
 		conf_value._limit_except = _limit_except;
-	if(_return.size() > 0)
+	if(_return.second.size() > 0)
 		conf_value._return = _return;
 	if(_autoindex)
 		conf_value._autoindex = _autoindex;
@@ -249,9 +263,8 @@ void LocConf::debug_print() {
 	std::cout << "=========================== location block:" << std::endl;
 	std::cout << "path: " << _path << std::endl;
 	std::cout << "limit_except: ";
-	std::cout << "return: ";
-	for(size_t i = 0; i < _return.size(); i++) {
-		std::cout << _return[i] << " ";
+	if(_return.first != 0 && _return.second != "") {
+		std::cout << "return: " << _return.first << " : " << _return.second << std::endl;
 	}
 	std::cout << std::endl;
 	std::cout << "autoindex: " << _autoindex << std::endl;
