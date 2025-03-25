@@ -64,8 +64,11 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 			return SUCCESS_STATIC;
 		}
 	} else if(method == POST) {
-		// todo CGIの処理を追加する
-		if(isFileUpload()) {
+		setCGI();
+		if(cgi_ != NULL) {
+			return SUCCESS_CGI;
+		} 
+		else if(isFileUpload()) {
 			return fileUpload();
 		} else {
 			setErrorFd(400);

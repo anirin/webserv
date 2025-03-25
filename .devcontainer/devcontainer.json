@@ -1,0 +1,21 @@
+{
+  "name": "Webserv Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Web Server",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "echo 'Dev container is ready!'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-vscode-remote.remote-containers"
+      ]
+    }
+  }
+}
