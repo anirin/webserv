@@ -89,29 +89,29 @@ void Connection::setHttpResponse() {
 }
 
 void Connection::setCGI() { // throw
-    std::string location_path = request_->getLocationPath();
-    int path_size = location_path.size();
+	std::string location_path = request_->getLocationPath();
+	int path_size = location_path.size();
 
-    if(path_size > 4 && location_path.substr(path_size - 4, 4) == ".php") {
-        CGI *cgi = NULL;
-        
-        Method method = request_->getMethod();
-        if (method == POST) {
-            std::string body = request_->getBody();
-            std::map<std::string, std::string> headers = request_->getHeader();
-            cgi = new CGI(location_path, body, headers);
-        } else {
-            cgi = new CGI(location_path);
-        }
-        
-        if(cgi == NULL) {
-            std::cerr << "[connection] Failed to create CGI object" << std::endl;
-            throw std::runtime_error("Failed to create CGI object");
-        }
-        cgi_ = cgi;
-        std::cout << "[connection] cgi is set" << std::endl;
-        return;
-    }
+	if(path_size > 4 && location_path.substr(path_size - 4, 4) == ".php") {
+		CGI *cgi = NULL;
+
+		Method method = request_->getMethod();
+		if(method == POST) {
+			std::string body = request_->getBody();
+			std::map<std::string, std::string> headers = request_->getHeader();
+			cgi = new CGI(location_path, body, headers);
+		} else {
+			cgi = new CGI(location_path);
+		}
+
+		if(cgi == NULL) {
+			std::cerr << "[connection] Failed to create CGI object" << std::endl;
+			throw std::runtime_error("Failed to create CGI object");
+		}
+		cgi_ = cgi;
+		std::cout << "[connection] cgi is set" << std::endl;
+		return;
+	}
 }
 
 void Connection::clearValue() {

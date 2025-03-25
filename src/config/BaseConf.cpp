@@ -102,7 +102,7 @@ int BaseConf::parse_token(std::string conf_content, std::vector<std::string>& to
 // ==================================== utils ====================================
 
 unsigned long my_stoul(const std::string& str) {
-	std::size_t *pos = 0;
+	std::size_t* pos = 0;
 	int base = 10;
 
 	const char* start = str.c_str();

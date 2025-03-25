@@ -1,7 +1,6 @@
 #include "Connection.hpp"
 
-void Connection::deleteFile()
-{
+void Connection::deleteFile() {
 	std::remove(request_->getLocationPath().c_str());
 	std::cout << "delete file" << std::endl;
 	std::string response_body = "<html>\r\n"
@@ -13,5 +12,5 @@ void Connection::deleteFile()
 								"</html>\r\n";
 	wbuff_ = response_body;
 
-	return ;
+	return;
 }

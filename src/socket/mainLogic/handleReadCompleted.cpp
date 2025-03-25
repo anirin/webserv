@@ -15,15 +15,29 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		return SUCCESS_STATIC;
 	}
 
-
 	// client max body size check
-	// todo client max body size check ここで対処すべきか不明だが、とりあえずここで処理（もっと前に処理すべきな気がする）
+	// todo client max body size check
+	// ここで対処すべきか不明だが、とりあえずここで処理（もっと前に処理すべきな気がする）
 	if(rbuff_.size() > conf_value_._client_max_body_size) {
 		std::cerr << "[connection] client max body size exceeded" << std::endl;
 		setHttpResponse();
 		setErrorFd(413);
 		buildStaticFileResponse(413);
 		return SUCCESS_STATIC;
+	}
+
+	// chunked処理
+	if(isChunked()) {
+		std::cout << "[connection] chunked body" << std::endl;
+		try {
+			setChunkedBody();
+		} catch(const std::exception &e) {
+			std::cerr << "[connection] Failed to parse chunked body: " << e.what() << std::endl;
+			setHttpResponse();
+			setErrorFd(400);
+			buildStaticFileResponse(400);
+			return SUCCESS_STATIC;
+		}
 	}
 
 	// autoindex処理
@@ -68,8 +82,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		setCGI();
 		if(cgi_ != NULL) {
 			return SUCCESS_CGI;
-		} 
-		else if(isFileUpload()) {
+		} else if(isFileUpload()) {
 			return fileUpload();
 		} else {
 			setErrorFd(400);
