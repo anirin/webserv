@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/25 15:01:54 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/25 18:05:54 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,9 +79,9 @@ void Connection::setHttpRequest(MainConf *mainConf) { // throw
 	}
 	conf_value_ = mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
 	std::cout << "[connection] request is set" << std::endl;
-	std::cout << rbuff_ << std::endl;
+	// std::cout << rbuff_ << std::endl;
 
-	mainConf->debug_print_conf_value(conf_value_);
+	// mainConf->debug_print_conf_value(conf_value_);
 }
 
 void Connection::setHttpResponse() {
@@ -105,7 +105,12 @@ void Connection::setCGI() { // throw
 }
 
 void Connection::clearValue() {
+	delete response_;
+	delete request_;
 	response_ = NULL;
+	request_ = NULL;
+
+	rbuff_.clear();
 }
 
 // ==================================== check ==============================================

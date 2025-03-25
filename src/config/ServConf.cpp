@@ -275,6 +275,7 @@ conf_value_t ServConf::getConfValue(std::string path) {
 	conf_value._error_page = _error_page;
 	conf_value._client_max_body_size = _client_max_body_size;
 	conf_value._root = _root;
+	conf_value._autoindex = false;
 
 	try {
 		locConf = select_location(path, _locations);

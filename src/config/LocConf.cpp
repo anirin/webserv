@@ -237,8 +237,7 @@ void LocConf::getConfValue(std::string path, conf_value_t &conf_value) {
 		conf_value._limit_except = _limit_except;
 	if(_return.second.size() > 0)
 		conf_value._return = _return;
-	if(_autoindex)
-		conf_value._autoindex = _autoindex;
+	conf_value._autoindex = _autoindex;
 	if(_index.size() > 0)
 		conf_value._index = _index;
 	if(_root.size() > 0)
