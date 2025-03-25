@@ -1,6 +1,8 @@
 #include "Connection.hpp"
 
 FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
+	std::cout << "[connection] request" << rbuff_ << std::endl;
+
 	// config と request の設定を行う
 	try {
 		setHttpRequest(mainConf);
@@ -13,7 +15,6 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		return SUCCESS_STATIC;
 	}
 
-	// std::cout << "[connection] request" << rbuff_ << std::endl;
 
 	// client max body size check
 	// todo client max body size check ここで対処すべきか不明だが、とりあえずここで処理（もっと前に処理すべきな気がする）

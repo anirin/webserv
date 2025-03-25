@@ -116,7 +116,6 @@ void MainConf::debug_print_conf_value(conf_value_t conf_value) {
 	if(conf_value._return.first != 0 && conf_value._return.second != "") {
 		std::cout << "return: " << conf_value._return.first << " : " << conf_value._return.second << std::endl;
 	}
-	std::cout << std::endl;
 	std::cout << "autoindex: " << conf_value._autoindex << std::endl;
 	std::cout << "index: ";
 	for(size_t i = 0; i < conf_value._index.size(); i++) {
