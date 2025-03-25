@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <stdexcept>
+#include <set>
 
 #include "ASocket.hpp"
 

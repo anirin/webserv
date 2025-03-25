@@ -46,8 +46,13 @@ void EpollWrapper::addEvent(int fd) {
 
 /* Delete given file descripter from epoll instance */
 void EpollWrapper::deleteEvent(int fd) {
-	if(epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, NULL) == -1)
-		throw std::runtime_error("Failed to delete event from epoll instance");
+    if(epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, NULL) == -1) {
+        // Only throw if it's not because the fd doesn't exist or is closed
+        if (errno != ENOENT && errno != EBADF) {
+            throw std::runtime_error("Failed to delete event from epoll instance: " + std::string(strerror(errno)));
+        }
+        // Otherwise silently continue - the fd is already gone from epoll
+    }
 }
 
 /* Wait for event */

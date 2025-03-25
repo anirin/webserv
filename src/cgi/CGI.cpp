@@ -58,7 +58,15 @@ void CGI::executeScriptInChild(int pipefd[2]) {
     }
     env[env_strings.size()] = NULL;
     
-    char* args[] = {(char*)"/usr/bin/php", (char*)_scriptPath.c_str(), NULL};
+    // Use a more flexible PHP path approach
+    const char* php_path = "/usr/bin/php";
+    
+    // Check if PHP exists at the hardcoded path
+    if (access(php_path, X_OK) == -1) {
+        throw std::runtime_error("PHP binary not found or not executable");
+    }
+    
+    char* args[] = {(char*)php_path, (char*)_scriptPath.c_str(), NULL};
     execve(args[0], args, env);
     
     for (size_t i = 0; i < env_strings.size(); i++) {
@@ -113,6 +121,27 @@ std::string CGI::execute() {
     }
 
     return output;
+}
+
+void CGI::init() {
+    int pipefd[2];
+    createPipe(pipefd);
+    _pid = createChildProcess();
+    
+    if (_pid == 0) {
+        executeScriptInChild(pipefd);
+        _exit(0);
+    } else {
+        close(pipefd[1]);
+        
+        int flags = fcntl(pipefd[0], F_GETFL, 0);
+        if (flags == -1) {
+            throw std::runtime_error("fcntl failed");
+        }
+        fcntl(pipefd[0], F_SETFL, flags | O_NONBLOCK);
+        
+        _fd = pipefd[0];
+    }
 }
 
 int CGI::getFd() const {

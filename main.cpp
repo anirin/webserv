@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+           */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
 /*   Updated: 2025/02/24 11:44:23by atsu             ###   ########.fr       */
@@ -28,25 +28,42 @@ std::string getConfContent() {
 }
 
 int main() {
-	/* Load configuration */
 	std::string content = getConfContent();
 	MainConf mainConf(content);
 
-	/* Make Listener, EpollWrapper, ConnectionWrapper */
 	Listener listener(8080);
 	EpollWrapper epollWrapper(100);
 	ConnectionWrapper connections;
 	epollWrapper.addEvent(listener.getFd());
 
-	/* Main loop */
+	std::map<int, int> event_count_per_iteration;
+	std::set<int> processed_fds; // Track FDs that have been deleted in this iteration
+
 	while(true) {
 		FileStatus file_status;
 
 		int nfds = epollWrapper.epwait();
+		event_count_per_iteration.clear(); // Reset counter each iteration
+		processed_fds.clear(); // Reset the tracking set
+
 		for(int i = 0; i < nfds; ++i) {
 			std::cout << std::endl << "[main.cpp] epoll for-loop ===[" << i << "]===" << std::endl;
 			struct epoll_event current_event = epollWrapper[i];
 			int target_fd = current_event.data.fd;
+
+			// Check if we've processed this FD too many times
+			if (event_count_per_iteration.find(target_fd) != event_count_per_iteration.end()) {
+				event_count_per_iteration[target_fd]++;
+				
+				if (event_count_per_iteration[target_fd] > 5) {
+					std::cout << "[main.cpp] Warning: Skipping fd " << target_fd 
+							<< " to prevent infinite loop" << std::endl;
+					continue; // Skip this FD for this iteration
+				}
+			} else {
+				event_count_per_iteration[target_fd] = 1;
+			}
+
 			if(target_fd == listener.getFd()) {
 				try {
 					Connection *newConn = new Connection(listener.getFd());
@@ -56,10 +73,26 @@ int main() {
 					std::cerr << "[main.cpp] Error: Accept failed: " << e.what() << std::endl;
 				}
 			} else {
+				// Check if this FD has already been processed and removed
+                if(processed_fds.find(target_fd) != processed_fds.end()) {
+                    std::cout << "[main.cpp] Skipping already processed fd " << target_fd << std::endl;
+                    continue;
+                }
+
 				Connection *conn = connections.getConnection(target_fd);
 
 				if(!conn) {
 					std::cerr << "[main.cpp] Error: Connection not found" << std::endl;
+					// Add to processed list to avoid repeated errors
+                    processed_fds.insert(target_fd);
+                    
+                    // Try to clean up this stray FD
+                    try {
+                        epollWrapper.deleteEvent(target_fd);
+                        close(target_fd);
+                    } catch(const std::exception &e) {
+                        // Just trying to clean up, so ignore errors
+                    }
 					continue;
 				}
 				if(conn->isTimedOut(&mainConf)) {
@@ -79,6 +112,7 @@ int main() {
 								connections.removeConnection(target_fd);
 								close(target_fd);
 								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+								processed_fds.insert(target_fd);
 							}
 							if(file_status == SUCCESS_STATIC) {
 								epollWrapper.setEvent(target_fd, EPOLLOUT);
@@ -97,31 +131,37 @@ int main() {
 								connections.removeConnection(target_fd);
 								close(target_fd);
 								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+								processed_fds.insert(target_fd);
 							}
 							if(file_status == SUCCESS) {
-								epollWrapper.setEvent(target_fd, EPOLLIN);
-								std::cout << "[main.cpp] connection event set to EPOLLIN" << std::endl;
-								// todo 初期化すべき部分は別にあるかも
+								epollWrapper.setEvent(target_fd, EPOLLIN | EPOLLONESHOT);
+								std::cout << "[main.cpp] connection event set to EPOLLIN|EPOLLONESHOT" << std::endl;
 								conn->clearValue();
 							}
 						}
 						break;
 					case PIPE:
-						conn->readCGI();
+						std::cout << "[main.cpp] Processing CGI pipe" << std::endl;
+						file_status = conn->readCGI();
 						if(file_status == ERROR) {
 							epollWrapper.deleteEvent(target_fd);
 							close(target_fd);
 							epollWrapper.deleteEvent(conn->getFd());
 							connections.removeConnection(conn->getFd());
 							close(conn->getFd());
-							std::cout << "[main.cpp] connection closed" << std::endl;
+							std::cout << "[main.cpp] connection closed due to CGI error" << std::endl;
+							processed_fds.insert(target_fd);
 						} else if(file_status == SUCCESS) {
-							epollWrapper.deleteEvent(target_fd);
-							close(target_fd);
-							epollWrapper.setEvent(
-								conn->getFd(),
-								EPOLLOUT); // 本来はSUCCESS後ではなく、cgi 開始した後に書き込むべき time outも考慮
-							std::cout << "[main.cpp] coection event set to EPOLLOUT" << std::endl;
+							try {
+								epollWrapper.deleteEvent(target_fd);
+								close(target_fd);
+								
+								 // Use EPOLLONESHOT to prevent immediate re-triggering
+								epollWrapper.setEvent(conn->getFd(), EPOLLOUT | EPOLLONESHOT);
+								std::cout << "[main.cpp] connection event set to EPOLLOUT|EPOLLONESHOT after CGI success" << std::endl;
+							} catch(const std::exception &e) {
+								std::cerr << "[main.cpp] Error modifying socket: " << e.what() << std::endl;
+							}
 						}
 						break;
 					default:

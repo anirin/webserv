@@ -93,21 +93,38 @@ void Connection::setCGI() { // throw
     int path_size = location_path.size();
 
     if(path_size > 4 && location_path.substr(path_size - 4, 4) == ".php") {
-        CGI *cgi = NULL;
+        // Convert to absolute path
+        char abs_path[PATH_MAX];
+        if (realpath(location_path.c_str(), abs_path) == NULL) {
+            std::cerr << "[connection] Failed to resolve path: " << location_path << std::endl;
+            throw std::runtime_error("Failed to resolve CGI script path");
+        }
         
+        std::string absolute_path(abs_path);
+        std::cout << "[connection] Resolved CGI path: " << absolute_path << std::endl;
+        
+        CGI *cgi = NULL;
         Method method = request_->getMethod();
         if (method == POST) {
-            std::string body = request_->getBody();
-            std::map<std::string, std::string> headers = request_->getHeader();
-            cgi = new CGI(location_path, body, headers);
+            // Use absolute path here
+            cgi = new CGI(absolute_path, request_->getBody(), request_->getHeader());
         } else {
-            cgi = new CGI(location_path);
+            cgi = new CGI(absolute_path);
         }
         
         if(cgi == NULL) {
             std::cerr << "[connection] Failed to create CGI object" << std::endl;
             throw std::runtime_error("Failed to create CGI object");
         }
+        
+        // Initialize the pipe and start the CGI process
+        try {
+            cgi->init();
+        } catch (const std::exception& e) {
+            delete cgi;
+            throw std::runtime_error(std::string("Failed to initialize CGI: ") + e.what());
+        }
+        
         cgi_ = cgi;
         std::cout << "[connection] cgi is set" << std::endl;
         return;
@@ -181,60 +198,107 @@ FileStatus Connection::readStaticFile(std::string file_path) {
 }
 
 FileStatus Connection::readCGI() {
-	char buff[buff_size];
-	ssize_t rlen = read(cgi_->getFd(), buff, sizeof(buff) - 1);
+    char buff[buff_size];
+    ssize_t rlen = read(cgi_->getFd(), buff, sizeof(buff) - 1);
 
-	if(rlen < 0) {
-		std::cerr << "[connection] read pipe failed" << std::endl;
-		cgi_->killCGI();
-		return ERROR;
-	} else if(rlen == 1023) {
-		wbuff_ += buff;
-		return NOT_COMPLETED;
-	}
+    if(rlen < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            return NOT_COMPLETED;
+        }
+        std::cerr << "[connection] read pipe failed: " << strerror(errno) << std::endl;
+        cgi_->killCGI();
+        return ERROR;
+    } 
+    else if(rlen == 0) {
+        int status;
+        waitpid(cgi_->getPid(), &status, WNOHANG);
+        
+        if (WIFEXITED(status)) {
+            std::cout << "[connection] CGI process exited with status: " << WEXITSTATUS(status) << std::endl;
+        }
+        
+        setHttpResponse();
+        
+        if (wbuff_.empty()) {
+            wbuff_ = "CGI script produced no output";
+            std::cout << "[connection] Warning: Empty CGI output" << std::endl;
+        }
+        
+        std::cout << "[connection] CGI output:\n" << wbuff_ << std::endl;
+        
+        if (!wbuff_.empty()) {
+            if (wbuff_.find("HTTP/") != 0) {
+                response_->setStartLine(200);
+                response_->setBody(wbuff_);
+            } else {
+            }
+        } else {
+            wbuff_ = "CGI script produced no output";
+            response_->setStartLine(200);
+            response_->setBody(wbuff_);
+        }
+        
+        if (request_ != NULL) {
+            std::map<std::string, std::string> headers = request_->getHeader();
+            std::string path = request_->getLocationPath();
+            std::string server_name = request_->getServerName();
+            response_->setHeader(headers, path, server_name);
+        } else {
+            std::map<std::string, std::string> empty_headers;
+            response_->setHeader(empty_headers, "", "localhost");
+            std::cout << "[connection] Warning: Request object was NULL when building CGI response" << std::endl;
+        }
+        
+        wbuff_ = response_->buildResponse();
+        
+        close(cgi_->getFd());
+        delete cgi_;
+        cgi_ = NULL;
+        return SUCCESS;
+    }
 
-	buff[rlen] = '\0';
-	wbuff_ += buff;
-	// todo chunked の場合はここで処理を行う 例） wbuff_ += "0\r\n\r\n";
-
-	close(cgi_->getFd());
-	delete cgi_;
-	cgi_ = NULL;
-
-	return SUCCESS;
+    buff[rlen] = '\0';
+    wbuff_ += buff;
+    return NOT_COMPLETED;
 }
 
 FileStatus Connection::writeSocket() {
-	char buff[buff_size];
+    char buff[buff_size];
 
-	if(!request_) {
-		std::cerr << "[connection] No request found" << std::endl;
-		return ERROR;
-	}
+    if(!request_ && wbuff_.empty()) {
+        std::cerr << "[connection] No request and no buffered data" << std::endl;
+        return ERROR;
+    }
 
-	if(wbuff_.empty()) {
-		return NOT_COMPLETED;
-	}
+    if(wbuff_.empty()) {
+        return NOT_COMPLETED;
+    }
 
-	// std::cout << wbuff_ << std::endl; // デバッグ用
+    ssize_t copy_len = std::min(wbuff_.size(), static_cast<std::size_t>(buff_size));
+    std::memcpy(buff, wbuff_.data(), copy_len);
+    if(copy_len != buff_size)
+        buff[copy_len] = '\0';
+    wbuff_.erase(0, copy_len);
+    ssize_t wlen = send(fd_, buff, copy_len, 0);
+    if(wlen == -1)
+        return ERROR;
+    if(wlen == buff_size)
+        return NOT_COMPLETED;
 
-	ssize_t copy_len = std::min(wbuff_.size(), static_cast<std::size_t>(buff_size));
-	std::memcpy(buff, wbuff_.data(), copy_len);
-	if(copy_len != buff_size)
-		buff[copy_len] = '\0';
-	wbuff_.erase(0, copy_len);
-	ssize_t wlen = send(fd_, buff, copy_len, 0);
-	if(wlen == -1)
-		return ERROR;
-	if(wlen == buff_size)
-		return NOT_COMPLETED;
-
-	delete response_;
-	delete request_;
-	response_ = NULL;
-	request_ = NULL;
-	std::cout << "[connection] write socket completed" << std::endl;
-	return SUCCESS;
+    if(wbuff_.empty()) {
+        if(response_) {
+            delete response_;
+            response_ = NULL;
+        }
+        if(request_) {
+            delete request_;
+            request_ = NULL;
+        }
+        std::cout << "[connection] write socket completed" << std::endl;
+        return SUCCESS;
+    }
+    
+    return NOT_COMPLETED;
 }
 
 void Connection::cleanUp() {

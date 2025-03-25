@@ -34,8 +34,10 @@ public:
     CGI(const std::string& scriptPath, const std::string& body, const std::map<std::string, std::string>& headers);
     ~CGI();
 
+    void init();
     std::string execute();
     int getFd() const;
+    pid_t getPid() const { return _pid; };
     void killCGI();
 };
 
