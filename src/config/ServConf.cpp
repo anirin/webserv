@@ -45,6 +45,8 @@ void ServConf::param(std::string content) {
 
 		if(_handler_directive.find(tokens[0]) != _handler_directive.end()) {
 			(this->*_handler_directive[tokens[0]])(tokens);
+		} else {
+			throw std::runtime_error("Error: unknown directive");
 		}
 	}
 }

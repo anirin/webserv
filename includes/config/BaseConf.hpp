@@ -22,6 +22,7 @@ protected:
 
 public:
 	virtual ~BaseConf() {}
+	BaseConf& operator=(const BaseConf& other);
 
 	// 純粋仮想関数
 	virtual void param(std::string content) = 0;

@@ -1,19 +1,43 @@
 #include "MainConf.hpp"
 
-// Constructor
-MainConf::MainConf(std::string conf_content) : _servers() {
+// =============================== constructor ===============================
+
+MainConf::MainConf() : _servers() {
+	// init
+	_servers.clear();
+	_handler_directive["server"] = &MainConf::handle_server_block;
+}
+
+MainConf::MainConf(std::string conf_content) : _servers() { // throw
 	// init
 	_servers.clear();
 	_handler_directive["server"] = &MainConf::handle_server_block;
 
-	param(conf_content);
+	try {
+		param(conf_content);
+	} catch(std::runtime_error &e) {
+		throw std::runtime_error("MainConf: " + std::string(e.what()));
+	}
 }
 
-// Destructor
 MainConf::~MainConf() {}
 
-// Setter
-void MainConf::param(std::string conf_content) {
+MainConf& MainConf::operator=(const MainConf& other)
+{
+	if (this == &other) {
+		return *this;
+	}
+
+	BaseConf::operator=(other);
+
+	_servers = other._servers;
+	_handler_directive = other._handler_directive;
+
+	return *this;
+}
+
+// =============================== setter ===============================
+void MainConf::param(std::string conf_content) { // throw
 	size_t pos = 0;
 
 	while(1) {

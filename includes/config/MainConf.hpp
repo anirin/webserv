@@ -17,8 +17,10 @@ private:
 	std::map<std::string, handler_directive_t> _handler_directive;
 
 public:
+	MainConf();
 	MainConf(std::string content);
 	~MainConf();
+	MainConf& operator=(const MainConf& other);
 
 	// setter
 	virtual void param(std::string conf_content);
