@@ -52,7 +52,7 @@ struct conf_value_t {
 	std::map<int, std::string> _error_page;
 	std::string _path;
 	std::vector<std::string> _limit_except;
-	std::vector<std::string> _return;
+	std::pair<int, std::string> _return;
 	bool _autoindex;
 	std::vector<std::string> _index;
 	std::string _root;

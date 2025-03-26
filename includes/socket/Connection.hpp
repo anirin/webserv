@@ -96,28 +96,32 @@ public:
 	void setHttpRequest(MainConf *mainConf);
 	void setHttpResponse();
 	void clearValue();
-    FileStatus buildRedirectResponse(const std::string& redirectPath);
+
+	FileStatus processAfterReadCompleted(MainConf *mainConf);
 
 	// method
-	void buildStaticFileResponse(int status_code);
-	std::string buildAutoIndexContent(const std::string& path);
-	FileStatus readSocket(MainConf *mainConf);
-	FileStatus processAfterReadCompleted(MainConf *mainConf);
-	FileStatus writeSocket();
-	FileStatus readStaticFile(std::string file_path);
-	FileStatus readCGI();
-	void cleanUp();
-	std::string getFilesystemPath(const std::string& requestPath) const;
-	bool isAutoindexableDirectory(const std::string& fsPath) const;
-
-	// file upload
+		// file upload
 	bool isFileUpload();
 	FileStatus fileUpload();
-	std::string parseMultipartFormData(const std::string& request, const std::string& boundary, std::string& filename, std::string& file_content);
+		// autoindex
+	std::string getAutoIndexPath();
+	void buildAutoIndexContent(std::string path);
+		// file delete
+	void deleteFile();
+		// clean up
+	void cleanUp();
+		// response 構築
+	void buildStaticFileResponse(int status_code);
+	FileStatus buildRedirectResponse(int status_code, std::string redirect_path);
+		// read write
+	FileStatus readStaticFile(std::string file_path);
+	FileStatus readSocket(MainConf *mainConf);
+	FileStatus readCGI();
+	FileStatus writeSocket();
+		// chunked
+	bool isChunked();
+	void setChunkedBody();
+
 };
-
-std::string vecToString(std::vector<std::string> vec);
-std::string mapToString(std::map<std::string, std::string>);
-
 
 #endif

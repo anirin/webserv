@@ -102,7 +102,7 @@ int BaseConf::parse_token(std::string conf_content, std::vector<std::string>& to
 // ==================================== utils ====================================
 
 unsigned long my_stoul(const std::string& str) {
-	std::size_t *pos = 0;
+	std::size_t* pos = 0;
 	int base = 10;
 
 	const char* start = str.c_str();
@@ -121,6 +121,10 @@ unsigned long my_stoul(const std::string& str) {
 
 	if(errno == ERANGE) {
 		throw std::out_of_range("my_stoul: value out of range of unsigned long");
+	}
+
+	if (*endptr != '\0') {
+		throw std::invalid_argument("my_stoul: invalid suffix in string");
 	}
 
 	// pos が指定されている場合、変換が終了した位置を記録

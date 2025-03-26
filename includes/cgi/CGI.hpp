@@ -1,30 +1,42 @@
-// テスト用のcgiクラス 米野さんのものを最終的に用いる
-#pragma once
-
-#include <string>
-#include <unistd.h>
-#include <signal.h> 
-#include <fcntl.h>
-#include <sys/wait.h>
+#ifndef CGI_HPP
+#define CGI_HPP
 
 #include <iostream>
+#include <cstdlib>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <string>
+#include <map>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <sstream>
 
 class CGI
 {
 private:
-	int _fd;
-	std::string _path;
-	int _pid;
+    std::string _scriptPath;
+    int _fd;
+    pid_t _pid;
+    std::string _body;
+    std::map<std::string, std::string> _headers;
+
+    void createPipe(int pipefd[2]);
+    pid_t createChildProcess();
+    void executeScriptInChild(int pipefd[2]);
+    std::string readScriptOutput(int pipefd[2]);
 
 public:
-	CGI();
-	CGI(std::string path); // テスト用 本来はさまざまな値が渡される
-	CGI(const CGI &cgi);
-	~CGI();
+    CGI(const std::string& scriptPath);
+    CGI(const std::string& scriptPath, const std::string& body, const std::map<std::string, std::string>& headers);
+    ~CGI();
 
-	// getter
-	int getFd() const;
-
-	CGI &operator=(const CGI &cgi); // なんでか使えない
-	void killCGI();
+    std::string execute();
+    int getFd() const;
+    void killCGI();
 };
+
+#endif

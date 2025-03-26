@@ -127,15 +127,26 @@ void ServConf::set_client_max_body_size(std::vector<std::string> tokens) {
 		throw std::runtime_error("client_max_body_size syntax error");
 	}
 
-	// todo エラーハンドリングの強化
-	if(tokens[1].find("k") != std::string::npos) {
+	if(tokens[1].find("k") != std::string::npos || tokens[1].find("K") != std::string::npos) {
 		tokens[1].erase(tokens[1].size() - 1, 1);
-		_client_max_body_size = my_stoul(tokens[1]) * 1024;
-	} else if(tokens[1].find("m") != std::string::npos) {
+		try {
+			_client_max_body_size = my_stoul(tokens[1]) * 1024;
+		} catch(std::exception &e) {
+			throw std::runtime_error("client_max_body_size syntax error");
+		}
+	} else if(tokens[1].find("m") != std::string::npos || tokens[1].find("M") != std::string::npos) {
 		tokens[1].erase(tokens[1].size() - 1, 1);
-		_client_max_body_size = my_stoul(tokens[1]) * 1024 * 1024;
+		try {
+			_client_max_body_size = my_stoul(tokens[1]) * 1024 * 1024;
+		} catch(std::exception &e) {
+			throw std::runtime_error("client_max_body_size syntax error");
+		}
 	} else {
-		_client_max_body_size = my_stoul(tokens[1]);
+		try {
+			_client_max_body_size = my_stoul(tokens[1]);
+		} catch(std::exception &e) {
+			throw std::runtime_error("client_max_body_size syntax error");
+		}
 	}
 }
 
@@ -275,6 +286,7 @@ conf_value_t ServConf::getConfValue(std::string path) {
 	conf_value._error_page = _error_page;
 	conf_value._client_max_body_size = _client_max_body_size;
 	conf_value._root = _root;
+	conf_value._autoindex = false;
 
 	try {
 		locConf = select_location(path, _locations);

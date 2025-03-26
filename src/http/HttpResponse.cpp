@@ -51,20 +51,20 @@ void HttpResponse::setHeader(std::map<std::string, std::string> requestHeader, s
 							 std::string server_name) {
 	headers_["Date"] = getDate();
 	headers_["Server"] = server_name;
-	if (path == "")
+	if(path == "")
 		headers_["Content-Type"] = "text/html";
 	else
 		headers_["Content-Type"] = getContentType(path);
 	headers_["Content-Language"] = requestHeader["Accept-Language"];
-	if (requestHeader["Keep-Alive"] != "none")
+	if(requestHeader["Keep-Alive"] != "none")
 		headers_["Keep-Alive"] = "timeout=5, max=100";
-	if (requestHeader["Connection"] != "")
+	if(requestHeader["Connection"] != "")
 		headers_["Connection"] = requestHeader["Connection"];
 	headers_["Connection"] = requestHeader["Connection"];
 	std::ostringstream ss;
 	ss << body_.size();
 	headers_["Content-Length"] = ss.str();
-	if (requestHeader["Location"] != "")
+	if(requestHeader["Location"] != "")
 		headers_["Location"] = requestHeader["Location"];
 }
 

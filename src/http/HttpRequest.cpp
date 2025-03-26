@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/24 19:06:50 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/26 14:03:50 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ HttpRequest::HttpRequest(std::string request, MainConf *mainConf) {
 	request_path_ = start_line_[1];
 	conf_value_ = mainConf->getConfValue(port_, server_name_, request_path_);
 
-	// todo 
+	// todo
 	// throw std::runtime_error("invalid request");
 }
 
@@ -79,6 +79,10 @@ std::string HttpRequest::getRequestPath() const {
 }
 
 // ==================================== setter ====================================
+
+void HttpRequest::setBody(std::string body) {
+	body_ = body;
+}
 
 std::vector<std::string> HttpRequest::parseRequestStartLine(std::string request) {
 	std::string first_line = request.substr(0, request.find("\r\n"));

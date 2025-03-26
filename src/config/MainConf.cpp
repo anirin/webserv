@@ -54,6 +54,10 @@ void MainConf::handle_server_block(std::vector<std::string> tokens) {
 conf_value_t MainConf::getConfValue(std::string port, std::string host, std::string path) {
 	conf_value_t conf_value;
 
+	// todo 初期化必要？
+	conf_value._return = std::make_pair(0, "");
+	conf_value._autoindex = false;
+
 	for(std::vector<ServConf>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		ServConf serv_conf = *it;
 
@@ -109,11 +113,9 @@ void MainConf::debug_print_conf_value(conf_value_t conf_value) {
 		std::cout << conf_value._limit_except[i] << " ";
 	}
 	std::cout << std::endl;
-	std::cout << "return: ";
-	for(size_t i = 0; i < conf_value._return.size(); i++) {
-		std::cout << conf_value._return[i] << " ";
+	if(conf_value._return.first != 0 && conf_value._return.second != "") {
+		std::cout << "return: " << conf_value._return.first << " : " << conf_value._return.second << std::endl;
 	}
-	std::cout << std::endl;
 	std::cout << "autoindex: " << conf_value._autoindex << std::endl;
 	std::cout << "index: ";
 	for(size_t i = 0; i < conf_value._index.size(); i++) {
