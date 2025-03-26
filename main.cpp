@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/24 11:44:23by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/26 14:08:03 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,6 @@ int main(int argc, char **argv) {
 					close(target_fd);
 					continue;
 				}
-
 				FileTypes type = conn->getFdType(target_fd);
 				switch(type) {
 					case SOCKET:

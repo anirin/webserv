@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/25 23:14:04 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/26 14:03:50 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,6 +165,8 @@ bool HttpRequest::isValidPath() {
 	/* where error_page exist or not is not checked */
 	/* make requested path that is based wevserv root */
 	// todo location path のロジックは改良する必要あり autoindexの場合も考慮する必要あり
+	// configに対応している場合はlocaiton pathには値が入る。そうではない場合は空文字列が入る
+	// またautoindexがonの場合は先にautoindexの処理が入るので、そもそもgetLocationPathは呼ばれない
 	location_path_ = getLocationPath(request_path_, conf_value_);
 	if(location_path_ == "") {
 		std::cout << "[http request] invalid path" << std::endl;

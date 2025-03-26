@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>HTTPメソッドテスト</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px;
+    }
+    #response {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>HTTPメソッド テスト</h1>
+
+  <label for="url">URL: </label>
+  <input type="text" id="url" size="50" value="https://jsonplaceholder.typicode.com/posts/1">
+  <br><br>
+
+  <button onclick="sendGet()">GET</button>
+  <button onclick="sendPost()">POST</button>
+  <button onclick="sendDelete()">DELETE</button>
+
+  <div id="response"></div>
+
+  <script>
+    async function sendGet() {
+      const url = document.getElementById('url').value;
+      const res = await fetch(url);
+      const data = await res.text();
+      showResponse(data);
+    }
+
+    async function sendPost() {
+      const url = document.getElementById('url').value;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: 'foo',
+          body: 'bar',
+          userId: 1
+        })
+      });
+      const data = await res.text();
+      showResponse(data);
+    }
+
+    async function sendDelete() {
+      const url = document.getElementById('url').value;
+      const res = await fetch(url, {
+        method: 'DELETE'
+      });
+      const data = await res.text();
+      showResponse(data || '削除リクエストが送信されました。');
+    }
+
+    function showResponse(data) {
+      document.getElementById('response').textContent = data;
+    }
+  </script>
+</body>
+</html>
+
