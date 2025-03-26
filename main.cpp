@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/24 11:44:23by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/24 19:46:32 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,6 @@ int main() {
 					close(target_fd);
 					continue;
 				}
-
 				FileTypes type = conn->getFdType(target_fd);
 				switch(type) {
 					case SOCKET:
@@ -126,7 +125,7 @@ int main() {
 						break;
 					default:
 						break;
-			}
+				}
 			}
 		}
 	}

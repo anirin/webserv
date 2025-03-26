@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/24 18:00:33 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/24 19:50:20 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,6 +110,7 @@ void Connection::buildStaticFileResponse(int status_code) {
 	std::string path = request_->getLocationPath();
 	std::string server_name = request_->getServerName();
 
+	/* processAfterReadCompletedの中でもresponceのnewをやっているので、どちらか一個にする必要あり？ */
 	response_ = new HttpResponse();
 	response_->setBody(wbuff_); // content length 格納のためにまずは body をセット
 	// todo header のステータスの設定
@@ -525,6 +526,7 @@ bool Connection::isAutoindexableDirectory(const std::string &fsPath) const {
 	struct stat path_stat;
 
 	// パスがディレクトリかつautoindexが有効か確認
+	std::cout << "autoindex: " << conf_value_._autoindex << std::endl;
 	if(conf_value_._autoindex && stat(fsPath.c_str(), &path_stat) == 0 && S_ISDIR(path_stat.st_mode)) {
 		return true;
 	}
