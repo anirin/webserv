@@ -15,7 +15,17 @@
 #include "EpollWrapper.hpp"
 #include "Listener.hpp"
 
-std::string getConfContent() {
+std::string getConfContent( char *confPath ) {
+	if (confPath) {
+		std::ifstream ifs(confPath);
+		if(!ifs) {
+			throw std::runtime_error("[main.cpp] Failed to open configuration file");
+		}
+		std::stringstream buffer;
+		buffer << ifs.rdbuf();
+		std::string content = buffer.str();
+		return content;
+	}
 	std::string confPath = "src/config/sample/test.conf";
 	std::ifstream ifs(confPath.c_str());
 	if(!ifs) {
@@ -27,9 +37,19 @@ std::string getConfContent() {
 	return content;
 }
 
-int main() {
+int main(int argc, char **argv) {
+	if (argc != 1 && argc != 2) {
+		std::cerr << "./webserv {your conf path} or ./webserv" << std::endl;
+		return 1;
+	}
+
+	char *confPath = NULL;
+	if (argc == 2) {
+		confPath = argv[1];
+	}
+
 	/* Load configuration */
-	std::string content = getConfContent();
+	std::string content = getConfContent(confPath);
 	MainConf mainConf(content);
 
 	/* Make Listener, EpollWrapper, ConnectionWrapper */
