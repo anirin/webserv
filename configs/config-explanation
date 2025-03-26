@@ -1,0 +1,26 @@
+# directive => location[1] : required or not[2] : default value[3] : description, useage[4]
+
+server {
+	listen 8080;              #[1] server   : [2] required    : [3] 0.0.0.0:80 : [4] Specifies the host and port to listen on
+	server_name localhost;    #[1] server   : [2] not required : [3] none         : [4] Defines the server name, can be a domain or IP
+	client_max_body_size 10M; #[1] server, location : [2] not required : [3] 1M   : [4] Sets the maximum allowed size of the client request body
+	error_page 404 /404.html; #[1] server, location : [2] not required : [3] none : [4] Redirects to custom error page for specified HTTP code, duplicable, absolute path
+	error_page 413 /413.html;
+
+	location / {
+		root /var/www/html;   #[1] server, location : [2] not required : [3] none          : [4] Sets the root directory for requests
+		autoindex on;         #[1] location : [2] not required : [3] off           : [4] Enables or disables directory listing
+		limit_except GET POST;#[1] location : [2] not required : [3] GET POST DELETE: [4] Restricts allowed HTTP methods
+		index index.html;     #[1] location : [2] not required : [3] none          : [4] Defines the default file to serve
+		return 302 http://localhost:8080/index.html; #[1] location : [2] not required : [3] none : [4] Returns an HTTP redirect with specified code and URL
+	}
+
+	# priority : = > ^~ > ~* = ~
+	# = : exact match
+	# ~ : regular expression match : ex) ~ .php
+	# ~* : regular expression match (case-insensitive) : ex) ~ .PHP
+	# ^~ : case-sensitive longest prefix match : ex) ^~ /images/
+	location ~ .php {
+		limit_except GET POST;
+	}
+}

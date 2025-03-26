@@ -198,22 +198,16 @@ void LocConf::set_client_max_body_size(std::vector<std::string> tokens) {
 		tokens[1].erase(tokens[1].size() - 1, 1);
 		try {
 			_client_max_body_size = my_stoul(tokens[1]) * 1024;
-		} catch(std::exception &e) {
-			throw std::runtime_error("client_max_body_size syntax error");
-		}
+		} catch(std::exception &e) { throw std::runtime_error("client_max_body_size syntax error"); }
 	} else if(tokens[1].find("m") != std::string::npos || tokens[1].find("M") != std::string::npos) {
 		tokens[1].erase(tokens[1].size() - 1, 1);
 		try {
 			_client_max_body_size = my_stoul(tokens[1]) * 1024 * 1024;
-		} catch(std::exception &e) {
-			throw std::runtime_error("client_max_body_size syntax error");
-		}
+		} catch(std::exception &e) { throw std::runtime_error("client_max_body_size syntax error"); }
 	} else {
 		try {
 			_client_max_body_size = my_stoul(tokens[1]);
-		} catch(std::exception &e) {
-			throw std::runtime_error("client_max_body_size syntax error");
-		}
+		} catch(std::exception &e) { throw std::runtime_error("client_max_body_size syntax error"); }
 	}
 }
 
@@ -252,6 +246,8 @@ void LocConf::getConfValue(std::string path, conf_value_t &conf_value) {
 		conf_value._root = _root;
 	if(_client_max_body_size != 1024 * 1024)
 		conf_value._client_max_body_size = _client_max_body_size;
+
+	// std::cout << "loc get conf ok" << std::endl;
 
 	LocConf locConf = get_location(path, _locations);
 	if(locConf.get_path().empty()) {

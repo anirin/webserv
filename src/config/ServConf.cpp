@@ -1,6 +1,24 @@
 #include "ServConf.hpp"
 
 // Constructor
+
+ServConf::ServConf() {
+	// init
+	_locations.clear();
+	_handler_directive["location"] = &ServConf::handle_location_block;
+	_handler_directive["listen"] = &ServConf::set_listen;
+	_handler_directive["server_name"] = &ServConf::set_server_name;
+	_handler_directive["error_page"] = &ServConf::set_error_page;
+	_handler_directive["client_max_body_size"] = &ServConf::set_client_max_body_size;
+	_handler_directive["root"] = &ServConf::set_root;
+
+	_server_name.clear();
+	_error_page.clear();
+	_client_max_body_size = 1024 * 1024; // default 1MB
+	_locations.clear();
+	_listen = std::make_pair("", 0);
+}
+
 ServConf::ServConf(std::string content) {
 	// init
 	_locations.clear();
@@ -15,12 +33,26 @@ ServConf::ServConf(std::string content) {
 	_error_page.clear();
 	_client_max_body_size = 1024 * 1024; // default 1MB
 	_locations.clear();
+	_listen = std::make_pair("", 0);
 
 	param(content);
 }
 
 // Destructor
 ServConf::~ServConf() {}
+
+// Operator
+ServConf &ServConf::operator=(const ServConf &other) {
+	if(this != &other) {
+		_listen = other._listen;
+		_server_name = other._server_name;
+		_error_page = other._error_page;
+		_client_max_body_size = other._client_max_body_size;
+		_root = other._root;
+		_locations = other._locations;
+	}
+	return *this;
+}
 
 // Setter
 void ServConf::param(std::string content) {
@@ -29,15 +61,16 @@ void ServConf::param(std::string content) {
 	while(1) {
 		std::vector<std::string> tokens;
 
-		try {
-			int result = BaseConf::parse_token(content, tokens, pos);
-			if(result == CONF_ERROR) {
-				throw std::runtime_error("Error: invalid token");
+		int result = BaseConf::parse_token(content, tokens, pos);
+		if(result == CONF_ERROR) {
+			throw std::runtime_error("Error: invalid token");
+		}
+		if(result == CONF_EOF) {
+			if(_listen.first == "" && _listen.second == 0) {
+				throw std::runtime_error("listen is not set");
 			}
-			if(result == CONF_EOF) {
-				break;
-			}
-		} catch(std::runtime_error &e) { throw std::runtime_error("Error: invaid token"); }
+			break;
+		}
 
 		if(tokens.empty()) {
 			continue;
@@ -45,6 +78,8 @@ void ServConf::param(std::string content) {
 
 		if(_handler_directive.find(tokens[0]) != _handler_directive.end()) {
 			(this->*_handler_directive[tokens[0]])(tokens);
+		} else {
+			throw std::runtime_error("Error: unknown directive");
 		}
 	}
 }
@@ -78,13 +113,14 @@ void ServConf::set_listen(std::vector<std::string> tokens) {
 		std::stringstream ss(tokens[1]);
 		ss >> value;
 		if(!ss.fail() && (ss.eof() != false)) {
-			if(port < 0 || port > 65535)
+			if(value < 0 || value > 65535)
 				throw std::runtime_error("listen port require (0~65535)");
 			port = value;
 		} else {
 			address = tokens[1];
 		}
 	}
+
 	_listen = std::make_pair(address, port);
 }
 
@@ -131,22 +167,16 @@ void ServConf::set_client_max_body_size(std::vector<std::string> tokens) {
 		tokens[1].erase(tokens[1].size() - 1, 1);
 		try {
 			_client_max_body_size = my_stoul(tokens[1]) * 1024;
-		} catch(std::exception &e) {
-			throw std::runtime_error("client_max_body_size syntax error");
-		}
+		} catch(std::exception &e) { throw std::runtime_error("client_max_body_size syntax error"); }
 	} else if(tokens[1].find("m") != std::string::npos || tokens[1].find("M") != std::string::npos) {
 		tokens[1].erase(tokens[1].size() - 1, 1);
 		try {
 			_client_max_body_size = my_stoul(tokens[1]) * 1024 * 1024;
-		} catch(std::exception &e) {
-			throw std::runtime_error("client_max_body_size syntax error");
-		}
+		} catch(std::exception &e) { throw std::runtime_error("client_max_body_size syntax error"); }
 	} else {
 		try {
 			_client_max_body_size = my_stoul(tokens[1]);
-		} catch(std::exception &e) {
-			throw std::runtime_error("client_max_body_size syntax error");
-		}
+		} catch(std::exception &e) { throw std::runtime_error("client_max_body_size syntax error"); }
 	}
 }
 
@@ -286,7 +316,6 @@ conf_value_t ServConf::getConfValue(std::string path) {
 	conf_value._error_page = _error_page;
 	conf_value._client_max_body_size = _client_max_body_size;
 	conf_value._root = _root;
-	conf_value._autoindex = false;
 
 	try {
 		locConf = select_location(path, _locations);

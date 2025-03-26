@@ -1,5 +1,13 @@
 #include "BaseConf.hpp"
 
+BaseConf& BaseConf::operator=(const BaseConf& other) {
+	if(this == &other) {
+		return *this;
+	}
+
+	return *this;
+}
+
 int BaseConf::parse_token(std::string conf_content, std::vector<std::string>& tokens, size_t& pos) {
 	std::string token;
 	char c;
@@ -17,6 +25,10 @@ int BaseConf::parse_token(std::string conf_content, std::vector<std::string>& to
 				case IN_BRACE:
 					return CONF_ERROR;
 				default:
+					if(!tokens.empty()) {
+						tokens.clear();
+						return CONF_ERROR;
+					}
 					return CONF_EOF;
 			}
 		}
@@ -78,6 +90,12 @@ int BaseConf::parse_token(std::string conf_content, std::vector<std::string>& to
 							state = IN_BRACE;
 						brace_count = 0;
 						break;
+					case '}':
+						if(!token.empty()) {
+							tokens.push_back(token);
+							token.clear();
+						}
+						return CONF_ERROR;
 
 					default:
 						if(isspace(c)) {
@@ -123,7 +141,7 @@ unsigned long my_stoul(const std::string& str) {
 		throw std::out_of_range("my_stoul: value out of range of unsigned long");
 	}
 
-	if (*endptr != '\0') {
+	if(*endptr != '\0') {
 		throw std::invalid_argument("my_stoul: invalid suffix in string");
 	}
 
