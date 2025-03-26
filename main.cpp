@@ -26,8 +26,10 @@ std::string getConfContent( char *confPath ) {
 		std::string content = buffer.str();
 		return content;
 	}
-	std::string confPath = "src/config/sample/test.conf";
-	std::ifstream ifs(confPath.c_str());
+
+	// todo 削除
+	std::string defaultPath = "src/config/sample/test.conf";
+	std::ifstream ifs(defaultPath.c_str());
 	if(!ifs) {
 		throw std::runtime_error("[main.cpp] Failed to open configuration file");
 	}
