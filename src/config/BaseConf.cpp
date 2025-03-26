@@ -25,7 +25,7 @@ int BaseConf::parse_token(std::string conf_content, std::vector<std::string>& to
 				case IN_BRACE:
 					return CONF_ERROR;
 				default:
-					if (!tokens.empty()) {
+					if(!tokens.empty()) {
 						tokens.clear();
 						return CONF_ERROR;
 					}
@@ -141,7 +141,7 @@ unsigned long my_stoul(const std::string& str) {
 		throw std::out_of_range("my_stoul: value out of range of unsigned long");
 	}
 
-	if (*endptr != '\0') {
+	if(*endptr != '\0') {
 		throw std::invalid_argument("my_stoul: invalid suffix in string");
 	}
 

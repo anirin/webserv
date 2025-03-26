@@ -9,22 +9,21 @@ MainConf::MainConf() : _servers() {
 }
 
 MainConf::MainConf(std::string conf_content) : _servers() { // throw
+	if(conf_content.length() == 0) {
+		throw std::runtime_error("MainConf: empty conf_content");
+	}
+
 	// init
 	_servers.clear();
 	_handler_directive["server"] = &MainConf::handle_server_block;
 
-	try {
-		param(conf_content);
-	} catch(std::runtime_error &e) {
-		throw std::runtime_error("MainConf: " + std::string(e.what()));
-	}
+	param(conf_content);
 }
 
 MainConf::~MainConf() {}
 
-MainConf& MainConf::operator=(const MainConf& other)
-{
-	if (this == &other) {
+MainConf &MainConf::operator=(const MainConf &other) {
+	if(this == &other) {
 		return *this;
 	}
 
@@ -43,20 +42,24 @@ void MainConf::param(std::string conf_content) { // throw
 	while(1) {
 		std::vector<std::string> tokens;
 
-		try {
-			int result = BaseConf::parse_token(conf_content, tokens, pos);
-			if(result == CONF_ERROR)
-				throw std::runtime_error("token error");
-			if(result == CONF_EOF) {
-				break;
-			}
-		} catch(std::runtime_error &e) { throw std::runtime_error("token error"); }
+		int result = BaseConf::parse_token(conf_content, tokens, pos);
+		if(result == CONF_ERROR)
+			throw std::runtime_error("token error");
+		if(result == CONF_EOF) {
+			break;
+		}
 
 		if(!tokens.empty() && _handler_directive.find(tokens[0]) != _handler_directive.end()) {
-			(this->*_handler_directive[tokens[0]])(tokens);
+			try {
+				(this->*_handler_directive[tokens[0]])(tokens);
+			} catch(std::runtime_error &e) { throw std::runtime_error("MainConf: " + std::string(e.what())); }
 		} else {
 			throw std::runtime_error("unknown directive");
 		}
+	}
+
+	if(_servers.empty()) {
+		throw std::runtime_error("MainConf: no server block");
 	}
 }
 
@@ -71,16 +74,34 @@ void MainConf::handle_server_block(std::vector<std::string> tokens) {
 	tokens[1].erase(0, 1);
 	tokens[1].erase(tokens[1].size() - 1, 1);
 
-	_servers.push_back(ServConf(tokens[1]));
+	std::vector<std::string> server_tokens;
+
+	ServConf servConf;
+
+	try {
+		servConf = ServConf(tokens[1]);
+	} catch(std::runtime_error &e) { throw std::runtime_error(std::string(e.what())); }
+
+	_servers.push_back(servConf);
 }
 
 // Getter
 conf_value_t MainConf::getConfValue(std::string port, std::string host, std::string path) {
 	conf_value_t conf_value;
 
-	// todo 初期化必要？
+	// conf_value init
+	conf_value._path = "";
+	conf_value._listen = std::make_pair("0.0.0.0", 80);
+	conf_value._server_name = "";
+	conf_value._error_page.clear();
+	conf_value._limit_except.clear();
 	conf_value._return = std::make_pair(0, "");
 	conf_value._autoindex = false;
+	conf_value._index.clear();
+	conf_value._root = "";
+	conf_value._client_max_body_size = 1024 * 1024;
+
+	std::cout << "init ok" << std::endl;
 
 	for(std::vector<ServConf>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		ServConf serv_conf = *it;
@@ -92,8 +113,11 @@ conf_value_t MainConf::getConfValue(std::string port, std::string host, std::str
 		int port_num;
 		ss >> port_num;
 
-		if(server_port == port_num && server_name == host) {
-			conf_value = serv_conf.getConfValue(path);
+		if((server_name == "" && server_port == port_num) || (server_port == port_num && server_name == host)) {
+			try {
+				conf_value = serv_conf.getConfValue(path);
+			} catch(std::runtime_error &e) { throw std::runtime_error("[ServConf] : " + std::string(e.what())); }
+
 			return conf_value;
 		}
 	}
