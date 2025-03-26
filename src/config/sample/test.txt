@@ -47,6 +47,8 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	std::cout << "mainConf is OK" << std::endl;
+
 	// search server && location block
 	std::string port = "8080";
 	std::string server_name = "localhost";
@@ -65,9 +67,11 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	std::cout << "get conf is OK" << std::endl;
+
 	// debug
 	// mainConf.debug_print();
-	// mainConf.debug_print_conf_value(conf_value);
+	mainConf.debug_print_conf_value(conf_value);
 
 	return 0;
 }
