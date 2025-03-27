@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/12 22:44:59 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/25 17:43:40 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/27 12:04:35 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,9 @@
 class Listener : public ASocket
 {
 private:
-	Listener();
 
 public:
+	Listener();
 	Listener(int port);
 	~Listener();
 	int getFd() const;

@@ -319,9 +319,11 @@ conf_value_t ServConf::getConfValue(std::string path) {
 
 	try {
 		locConf = select_location(path, _locations);
-	} catch(std::runtime_error &e) { throw std::runtime_error("[server] location not found"); }
+		locConf.getConfValue(path, conf_value);
+	} catch(std::runtime_error &e) { 
+		return conf_value;
+	}
 
-	locConf.getConfValue(path, conf_value);
 	return conf_value;
 }
 
