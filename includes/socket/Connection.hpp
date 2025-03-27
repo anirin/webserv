@@ -29,6 +29,7 @@
 #include <dirent.h>
 #include <sstream>
 #include <iomanip>
+#include <set>
 
 #include "ASocket.hpp"
 #include "HttpRequest.hpp"

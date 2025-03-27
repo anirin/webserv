@@ -6,7 +6,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	// config と request の設定を行う
 	try {
 		setHttpRequest(mainConf);
-		if (request_->isValidHttpMethod() == false) {
+		if(request_->isValidHttpMethod() == false) {
 			throw std::runtime_error("invalid http method");
 		}
 
