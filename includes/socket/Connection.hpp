@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:18:35 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/25 11:07:48by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/27 21:19:17 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ enum FileStatus
 	ERROR,
 	NOT_COMPLETED,
 	CLOSED,
+	BADREQUEST,
 };
 
 class Connection : public ASocket
@@ -113,6 +114,7 @@ public:
 	void cleanUp();
 		// response 構築
 	void buildStaticFileResponse(int status_code);
+	void buildBadRequestResponse();
 	FileStatus buildRedirectResponse(int status_code, std::string redirect_path);
 		// read write
 	FileStatus readStaticFile(std::string file_path);

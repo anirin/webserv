@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/27 16:15:45 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/27 21:25:55 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,10 +217,11 @@ FileStatus Connection::readCGI() {
 FileStatus Connection::writeSocket() {
 	char buff[buff_size];
 
-	if(!request_) {
-		std::cerr << "[connection] No request found" << std::endl;
-		return ERROR;
-	}
+	std::cout << "reaching writeSocket" << std::endl;
+	/* if(!request_) { */
+	/* 	std::cerr << "[connection] No request found" << std::endl; */
+	/* 	return ERROR; */
+	/* } */
 
 	if(wbuff_.empty()) {
 		return NOT_COMPLETED;
@@ -240,7 +241,8 @@ FileStatus Connection::writeSocket() {
 		return NOT_COMPLETED;
 
 	delete response_;
-	delete request_;
+	if (request_)
+		delete request_;
 	response_ = NULL;
 	request_ = NULL;
 	std::cout << "[connection] write socket completed" << std::endl;

@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/17 17:52:45 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/17 01:36:19 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/27 20:42:47 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,15 @@ void HttpResponse::setHeader(std::map<std::string, std::string> requestHeader, s
 	headers_["Content-Length"] = ss.str();
 	if(requestHeader["Location"] != "")
 		headers_["Location"] = requestHeader["Location"];
+}
+
+void HttpResponse::setBadRequestHeader() {
+	headers_["Date"] = getDate();
+	headers_["Content-Type"] = "text/html";
+	headers_["Content-Length"] = "0";
+	std::ostringstream ss;
+	ss << body_.size();
+	headers_["Content-Length"] = ss.str();
 }
 
 void HttpResponse::setBody(std::string buff) {

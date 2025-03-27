@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/17 16:40:12 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/26 07:30:48 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/27 20:41:44 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ class HttpResponse : public AHttp
 		void setStartLine(int status_code);
 		void setBody(std::string buff);
 		void setHeader(std::map<std::string, std::string> requestHeader, std::string path, std::string server_name);
+		void setBadRequestHeader();
 		void setStatusCode(int status_code);
 
 		std::string buildResponse();

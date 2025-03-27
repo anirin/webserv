@@ -1,5 +1,6 @@
 #include "Connection.hpp"
 
+
 // todo 命名変更
 void Connection::setErrorFd(int status_code) {
 	if(conf_value_._error_page.empty() ||
@@ -22,16 +23,16 @@ void Connection::setErrorFd(int status_code) {
 		std::string status_code_str = ss.str();
 
 		std::cerr << "[connection] error_page is not set" << std::endl;
-		wbuff_ = "<html>\r\n"
-				 "<head><title>" +
-				 status_code_phrase[status_code_str] +
-				 "</title></head>\r\n"
-				 "<body>\r\n"
-				 "<h1>" +
-				 status_code_str + " " + status_code_phrase[status_code_str] +
-				 "</h1>\r\n"
-				 "</body>\r\n"
-				 "</html>\r\n";
+		/* wbuff_ = "<html>\r\n" */
+		/* 		 "<head><title>" + */
+		/* 		 status_code_phrase[status_code_str] + */
+		/* 		 "</title></head>\r\n" */
+		/* 		 "<body>\r\n" */
+		/* 		 "<h1>" + */
+		/* 		 status_code_str + " " + status_code_phrase[status_code_str] + */
+		/* 		 "</h1>\r\n" */
+		/* 		 "</body>\r\n" */
+		/* 		 "</html>\r\n"; */
 
 		return;
 	}
@@ -47,14 +48,14 @@ void Connection::setErrorFd(int status_code) {
 }
 
 void Connection::buildStaticFileResponse(int status_code) {
-	std::cout << "reach 1 here in buildStaticFileResponse" << std::cout;
+	if (request_ == NULL) {
+		std::cerr << "[connection] request is NULL" << std::endl;
+		return;
+	}
 	std::map<std::string, std::string> r_header = request_->getHeader();
-	std::cout << "reach 2 here in buildStaticFileResponse" << std::cout;
 	std::string path = request_->getLocationPath();
-	std::cout << "reach 3 here in buildStaticFileResponse" << std::cout;
 	std::string server_name = request_->getServerName();
 
-	std::cout << "reach 4 here in buildStaticFileResponse" << std::cout;
 	response_ = new HttpResponse();
 	response_->setBody(wbuff_);
 	response_->setStartLine(status_code);
@@ -62,4 +63,19 @@ void Connection::buildStaticFileResponse(int status_code) {
 
 	wbuff_ = response_->buildResponse();
 	std::cout << "[connection] response build" << std::endl;
+}
+
+void Connection::buildBadRequestResponse() {
+	response_ = new HttpResponse();
+	std::string body = "<html>\r\n"
+					   "<head><title>400 Bad Request</title></head>\r\n"
+					   "<body>\r\n"
+					   "<h1>400 Bad Request</h1>\r\n"
+					   "</body>\r\n"
+					   "</html>\r\n";
+	response_->setBody(body);
+	response_->setStartLine(400);
+	response_->setBadRequestHeader();
+	wbuff_ = response_->buildResponse();
+	std::cout << "[connection] bad request response build" << std::endl;
 }
