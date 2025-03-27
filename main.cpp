@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/26 14:08:03 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/27 12:49:45 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,8 @@
 #include "EpollWrapper.hpp"
 #include "Listener.hpp"
 
-std::string getConfContent( char *confPath ) {
-	if (confPath) {
+std::string getConfContent(char *confPath) {
+	if(confPath) {
 		std::ifstream ifs(confPath);
 		if(!ifs) {
 			throw std::runtime_error("[main.cpp] Failed to open configuration file");
@@ -27,7 +27,7 @@ std::string getConfContent( char *confPath ) {
 		return content;
 	}
 
-	// todo 削除
+	// todo 以下の項目を削除
 	std::string defaultPath = "src/config/sample/test.conf";
 	std::ifstream ifs(defaultPath.c_str());
 	if(!ifs) {
@@ -40,25 +40,50 @@ std::string getConfContent( char *confPath ) {
 }
 
 int main(int argc, char **argv) {
-	if (argc != 1 && argc != 2) {
+	if(argc != 1 && argc != 2) {
 		std::cerr << "./webserv {your conf path} or ./webserv" << std::endl;
 		return 1;
 	}
 
 	char *confPath = NULL;
-	if (argc == 2) {
+	if(argc == 2) {
 		confPath = argv[1];
 	}
 
-	/* Load configuration */
+	// configの読み込み
 	std::string content = getConfContent(confPath);
-	MainConf mainConf(content);
+	MainConf mainConf;
+	try {
+		mainConf = MainConf(content);
+	} catch(const std::exception &e) {
+		std::cerr << "[main.cpp] Error: " << e.what() << std::endl;
+		return 1;
+	}
 
-	/* Make Listener, EpollWrapper, ConnectionWrapper */
-	Listener listener(8080);
+	// サーバーの設定
 	EpollWrapper epollWrapper(100);
 	ConnectionWrapper connections;
-	epollWrapper.addEvent(listener.getFd());
+
+	// ポート番号の重複を取り除く
+	std::vector<std::pair<std::string, int> > ports = mainConf.get_listens();
+	std::set<int> unique_ports;
+	for(size_t i = 0; i < ports.size(); i++) {
+		unique_ports.insert(ports[i].second);
+	}
+
+	// リスナーの設定
+	std::vector<int> listen_fds;
+	for(std::set<int>::iterator it = unique_ports.begin(); it != unique_ports.end(); ++it) {
+		Listener newl;
+		try {
+			newl = Listener(*it);
+		} catch(const std::exception &e) {
+			std::cerr << "[main.cpp] Error: Listen failed: " << e.what() << std::endl;
+			continue;
+		}
+		epollWrapper.addEvent(newl.getFd());
+		listen_fds.push_back(newl.getFd());
+	}
 
 	/* Main loop */
 	while(true) {
@@ -69,9 +94,9 @@ int main(int argc, char **argv) {
 			std::cout << std::endl << "[main.cpp] epoll for-loop ===[" << i << "]===" << std::endl;
 			struct epoll_event current_event = epollWrapper[i];
 			int target_fd = current_event.data.fd;
-			if(target_fd == listener.getFd()) {
+			if(std::find(listen_fds.begin(), listen_fds.end(), target_fd) != listen_fds.end()) {
 				try {
-					Connection *newConn = new Connection(listener.getFd());
+					Connection *newConn = new Connection(target_fd);
 					epollWrapper.addEvent(newConn->getFd());
 					connections.addConnection(newConn);
 				} catch(const std::exception &e) {

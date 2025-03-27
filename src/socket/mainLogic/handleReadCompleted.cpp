@@ -1,17 +1,20 @@
 #include "Connection.hpp"
 
 FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
-	std::cout << "[connection] request: " << rbuff_ << std::endl;
+	std::cout << "[connection] request" << rbuff_ << std::endl;
 
 	// config と request の設定を行う
 	try {
 		setHttpRequest(mainConf);
+		if(request_->isValidHttpMethod() == false) {
+			throw std::runtime_error("invalid http method");
+		}
+
 	} catch(const std::exception &e) {
 		// 400 Bad Request の処理を行う
 		std::cerr << "[connection] Failed to parse request: " << e.what() << std::endl;
-		/* setHttpResponse(); */
+		setHttpResponse();
 		setErrorFd(400);
-		std::cout << "reaching here in processAfterReadCompleted" << std::endl;
 		buildStaticFileResponse(400);
 		return SUCCESS_STATIC;
 	}
@@ -21,7 +24,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	// ここで対処すべきか不明だが、とりあえずここで処理（もっと前に処理すべきな気がする）
 	if(rbuff_.size() > conf_value_._client_max_body_size) {
 		std::cerr << "[connection] client max body size exceeded" << std::endl;
-		/* setHttpResponse(); */
+		setHttpResponse();
 		setErrorFd(413);
 		buildStaticFileResponse(413);
 		return SUCCESS_STATIC;
@@ -34,7 +37,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 			setChunkedBody();
 		} catch(const std::exception &e) {
 			std::cerr << "[connection] Failed to parse chunked body: " << e.what() << std::endl;
-			/* setHttpResponse(); */
+			setHttpResponse();
 			setErrorFd(400);
 			buildStaticFileResponse(400);
 			return SUCCESS_STATIC;
@@ -45,7 +48,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	std::string autoindex_path = getAutoIndexPath();
 	if(autoindex_path != "") {
 		std::cout << "[connection] autoindex is set" << std::endl;
-		/* setHttpResponse(); */
+		setHttpResponse();
 		buildAutoIndexContent(autoindex_path);
 		buildStaticFileResponse(200);
 		return SUCCESS_STATIC;
@@ -60,7 +63,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	// エラーハンドリング(405, 404, 505)
 	int status_code = request_->getStatusCode();
 	if(status_code != 200) {
-		/* setHttpResponse(); */
+		setHttpResponse();
 		setErrorFd(status_code);
 		buildStaticFileResponse(status_code);
 		return SUCCESS_STATIC;

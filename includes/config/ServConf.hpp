@@ -25,8 +25,10 @@ private:
 	std::map<std::string, void (ServConf::*)(std::vector<std::string>)> _handler_directive;
 
 public:
+	ServConf();
 	ServConf(std::string content);
 	~ServConf();
+	ServConf &operator=(const ServConf &other);
 
 	virtual void param(std::string content);
 

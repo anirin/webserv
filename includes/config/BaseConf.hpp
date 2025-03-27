@@ -22,6 +22,7 @@ protected:
 
 public:
 	virtual ~BaseConf() {}
+	BaseConf& operator=(const BaseConf& other);
 
 	// 純粋仮想関数
 	virtual void param(std::string content) = 0;
@@ -47,10 +48,10 @@ enum LocationType {
 };
 
 struct conf_value_t {
+	std::string _path;
 	std::pair<std::string, int> _listen;
 	std::string _server_name;
 	std::map<int, std::string> _error_page;
-	std::string _path;
 	std::vector<std::string> _limit_except;
 	std::pair<int, std::string> _return;
 	bool _autoindex;
