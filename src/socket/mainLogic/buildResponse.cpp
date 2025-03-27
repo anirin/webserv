@@ -47,10 +47,14 @@ void Connection::setErrorFd(int status_code) {
 }
 
 void Connection::buildStaticFileResponse(int status_code) {
+	std::cout << "reach 1 here in buildStaticFileResponse" << std::cout;
 	std::map<std::string, std::string> r_header = request_->getHeader();
+	std::cout << "reach 2 here in buildStaticFileResponse" << std::cout;
 	std::string path = request_->getLocationPath();
+	std::cout << "reach 3 here in buildStaticFileResponse" << std::cout;
 	std::string server_name = request_->getServerName();
 
+	std::cout << "reach 4 here in buildStaticFileResponse" << std::cout;
 	response_ = new HttpResponse();
 	response_->setBody(wbuff_);
 	response_->setStartLine(status_code);

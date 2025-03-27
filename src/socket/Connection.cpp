@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/26 14:17:22 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/27 16:03:22 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,7 @@ void Connection::setHttpRequest(MainConf *mainConf) { // throw
 		request_ = new HttpRequest(rbuff_, mainConf);
 	} catch(const std::exception &e) {
 		std::cerr << "[connection] Failed to parse request: " << e.what() << std::endl;
+		request_ = NULL;
 		throw std::runtime_error("Failed to parse request");
 	}
 	conf_value_ = mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());

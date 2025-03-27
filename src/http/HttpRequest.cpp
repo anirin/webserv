@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/26 14:03:50 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/26 18:25:33 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,9 +32,12 @@ HttpRequest::HttpRequest(std::string request, MainConf *mainConf) {
 	port_ = server_and_port.substr(pos + 1);
 	request_path_ = start_line_[1];
 	conf_value_ = mainConf->getConfValue(port_, server_name_, request_path_);
-
-	// todo
-	// throw std::runtime_error("invalid request");
+	std::map<std::string, std::string>::iterator it = headers_.find("Host");
+	/* std::cout << "reach check header's host" << std::endl; */
+	if (it->second == "" || it == headers_.end()) {
+		std::cout << "[http request] invalid request" << std::endl;
+		throw std::runtime_error("invalid request");
+	}
 }
 
 // ==================================== getter ====================================
