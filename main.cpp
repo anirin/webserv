@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/27 12:49:45 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/27 21:18:54 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include "ConnectionWrapper.hpp"
 #include "EpollWrapper.hpp"
 #include "Listener.hpp"
+#include "includes/socket/Connection.hpp"
 
 std::string getConfContent(char *confPath) {
 	if(confPath) {
