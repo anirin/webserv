@@ -1,7 +1,9 @@
 #include "Connection.hpp"
 
 FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
-	std::cout << "[connection] request" << rbuff_ << std::endl;
+	// std::cout << "<============ rbuff_: ==============> " << std::endl
+	// std::cout << std::string(rbuff_.begin(), rbuff_.end()) << std::endl;
+	// std::cout << "<============ rbuff_: ==============> " << std::endl;
 
 	// config と request の設定を行う
 	try {
@@ -10,35 +12,19 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		// 400 Bad Request の処理を行う
 		std::cerr << "[connection] Failed to parse request: " << e.what() << std::endl;
 		setHttpResponse();
-		setErrorFd(400);
-		/* buildStaticFileResponse(400); */
 		buildBadRequestResponse();
 		return SUCCESS_STATIC;
 	}
 
 	// client max body size check
-	// todo client max body size check
-	// ここで対処すべきか不明だが、とりあえずここで処理（もっと前に処理すべきな気がする）
+	// std::cout << "[connection] rbuff_ size: " << rbuff_.size() << ", " << conf_value_._client_max_body_size <<
+	// std::endl;
 	if(rbuff_.size() > conf_value_._client_max_body_size) {
 		std::cerr << "[connection] client max body size exceeded" << std::endl;
 		setHttpResponse();
 		setErrorFd(413);
 		buildStaticFileResponse(413);
 		return SUCCESS_STATIC;
-	}
-
-	// chunked処理
-	if(isChunked()) {
-		std::cout << "[connection] chunked body" << std::endl;
-		try {
-			setChunkedBody();
-		} catch(const std::exception &e) {
-			std::cerr << "[connection] Failed to parse chunked body: " << e.what() << std::endl;
-			setHttpResponse();
-			setErrorFd(400);
-			buildStaticFileResponse(400);
-			return SUCCESS_STATIC;
-		}
 	}
 
 	// autoindex処理
@@ -76,6 +62,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 			std::string file_path = request_->getLocationPath();
 			std::cout << "[connection] file path: " << file_path << std::endl;
 			readStaticFile(file_path);
+			// todo error 処理がない
 			buildStaticFileResponse(200);
 			return SUCCESS_STATIC;
 		}

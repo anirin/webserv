@@ -320,9 +320,7 @@ conf_value_t ServConf::getConfValue(std::string path) {
 	try {
 		locConf = select_location(path, _locations);
 		locConf.getConfValue(path, conf_value);
-	} catch(std::runtime_error &e) { 
-		return conf_value;
-	}
+	} catch(std::runtime_error &e) { return conf_value; }
 
 	return conf_value;
 }

@@ -1,6 +1,5 @@
 #include "Connection.hpp"
 
-
 // todo 命名変更
 void Connection::setErrorFd(int status_code) {
 	if(conf_value_._error_page.empty() ||
@@ -23,16 +22,19 @@ void Connection::setErrorFd(int status_code) {
 		std::string status_code_str = ss.str();
 
 		std::cerr << "[connection] error_page is not set" << std::endl;
-		/* wbuff_ = "<html>\r\n" */
-		/* 		 "<head><title>" + */
-		/* 		 status_code_phrase[status_code_str] + */
-		/* 		 "</title></head>\r\n" */
-		/* 		 "<body>\r\n" */
-		/* 		 "<h1>" + */
-		/* 		 status_code_str + " " + status_code_phrase[status_code_str] + */
-		/* 		 "</h1>\r\n" */
-		/* 		 "</body>\r\n" */
-		/* 		 "</html>\r\n"; */
+		std::string content = "<html>\r\n"
+							  "<head><title>" +
+							  status_code_phrase[status_code_str] +
+							  "</title></head>\r\n"
+							  "<body>\r\n"
+							  "<h1>" +
+							  status_code_str + " " + status_code_phrase[status_code_str] +
+							  "</h1>\r\n"
+							  "<p>error page is not set</p>\r\n"
+							  "<p>please set error_page in config file</p>\r\n"
+							  "</body>\r\n"
+							  "</html>\r\n";
+		wbuff_ = stringToVector(content);
 
 		return;
 	}
@@ -48,7 +50,7 @@ void Connection::setErrorFd(int status_code) {
 }
 
 void Connection::buildStaticFileResponse(int status_code) {
-	if (request_ == NULL) {
+	if(request_ == NULL) {
 		std::cerr << "[connection] request is NULL" << std::endl;
 		return;
 	}
@@ -73,7 +75,8 @@ void Connection::buildBadRequestResponse() {
 					   "<h1>400 Bad Request</h1>\r\n"
 					   "</body>\r\n"
 					   "</html>\r\n";
-	response_->setBody(body);
+
+	response_->setBody(stringToVector(body));
 	response_->setStartLine(400);
 	response_->setBadRequestHeader();
 	wbuff_ = response_->buildResponse();

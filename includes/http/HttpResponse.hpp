@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/17 16:40:12 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/27 20:41:44 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/29 16:40:17 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,21 +46,26 @@ class HttpResponse : public AHttp
 		// getter
 		std::vector<std::string> getStartLine() const;
 		std::map<std::string, std::string> getHeader() const;
-		std::string getBody() const;
+		std::vector<char> getBody() const;
 
 		// setter
 		static void initializeStatusCodes();
 		void setStartLine(int status_code);
-		void setBody(std::string buff);
+		void setBody(std::vector<char> body);
 		void setHeader(std::map<std::string, std::string> requestHeader, std::string path, std::string server_name);
 		void setBadRequestHeader();
 		void setStatusCode(int status_code);
 
-		std::string buildResponse();
+		std::vector<char> buildResponse();
 
 		// util
 		std::string getContentType(std::string path);
 		std::string getDate();
 };
+
+// ========================= util ====================================
+
+std::vector<char> stringToVector(std::string str);
+std::string vectorToString(std::vector<char> vec);
 
 #endif
