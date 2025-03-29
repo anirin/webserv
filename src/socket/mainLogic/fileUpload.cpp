@@ -79,14 +79,14 @@ bool saveUploadFile(const std::vector<char>& body, size_t start, size_t size, co
 }
 
 // レスポンスHTMLを作成する関数
-std::string createResponseHtml(const std::string& filename, const std::string& file_content_type) {
+std::string createResponseHtml(const std::string& filename) {
 	std::stringstream response_body;
 	response_body << "<html>\r\n"
 				  << "<head><title>Upload Successful</title></head>\r\n"
 				  << "<body>\r\n"
 				  << "<h1>File Upload Successful</h1>\r\n"
-				  << "<p>Uploaded file: " << filename << " (" << file_content_type << ")</p>\r\n";
-	response_body << "</body>\r\n"
+				  << "<p>Uploaded file: " << filename << " " << "</p>\r\n"
+				  << "</body>\r\n"
 				  << "</html>\r\n";
 
 	return response_body.str();
@@ -113,7 +113,7 @@ bool Connection::isFileUpload() {
 }
 
 // ファイルアップロードの処理
-FileStatus Connection::fileUpload() {
+FileStatus Connection::fileUpload(std::string upload_dir) {
 	std::cout << "[connection] Processing file upload" << std::endl;
 
 	std::map<std::string, std::string> headers = request_->getHeader();
@@ -190,10 +190,6 @@ FileStatus Connection::fileUpload() {
 
 	std::cout << "[connection] File content type: " << file_content_type << std::endl;
 
-	// todo
-	// アップロードディレクトリを決定
-	std::string upload_dir = "./www/uploads/";
-
 	// ファイル保存
 	if(!saveUploadFile(body, content_start, content_size, upload_dir, filename)) {
 		std::cerr << "[connection] Failed to save file" << std::endl;
@@ -206,7 +202,7 @@ FileStatus Connection::fileUpload() {
 	std::cout << "[connection] File uploaded successfully: " << file_path << std::endl;
 
 	// 成功レスポンスを構築
-	std::string content = createResponseHtml(filename, file_content_type);
+	std::string content = createResponseHtml(filename);
 	wbuff_ = stringToVector(content);
 	buildStaticFileResponse(201); // 201 Created
 
