@@ -6,13 +6,13 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/17 17:52:45 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/27 20:42:47 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/29 16:39:14 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpResponse.hpp"
 
-std::map<int, std::string> HttpResponse::status_codes_; // todo ここで用いるのは適切か？　header or static
+std::map<int, std::string> HttpResponse::status_codes_;
 
 /* Make map data of status codes and messages */
 void HttpResponse::initializeStatusCodes() {
@@ -77,17 +77,25 @@ void HttpResponse::setBadRequestHeader() {
 	headers_["Content-Length"] = ss.str();
 }
 
-void HttpResponse::setBody(std::string buff) {
+void HttpResponse::setBody(std::vector<char> buff) {
 	body_ = buff;
 }
 
-std::string HttpResponse::buildResponse() {
-	std::string response = start_line_[0] + " " + start_line_[1] + " " + start_line_[2] + "\r\n";
+std::vector<char> HttpResponse::buildResponse() {
+	std::string header = start_line_[0] + " " + start_line_[1] + " " + start_line_[2] + "\r\n";
 	for(std::map<std::string, std::string>::iterator it = headers_.begin(); it != headers_.end(); ++it) {
-		response += it->first + ": " + it->second + "\r\n";
+		header += it->first + ": " + it->second + "\r\n";
 	}
-	response += "\r\n";
-	response += body_;
+	header += "\r\n";
+
+	std::vector<char> response;
+
+	response = stringToVector(header);
+
+	for(size_t i = 0; i < body_.size(); ++i) {
+		response.push_back(body_[i]);
+	}
+
 	return response;
 }
 
@@ -105,7 +113,7 @@ std::map<std::string, std::string> HttpResponse::getHeader() const {
 	return headers_;
 }
 
-std::string HttpResponse::getBody() const {
+std::vector<char> HttpResponse::getBody() const {
 	return body_;
 }
 
@@ -129,13 +137,30 @@ std::string HttpResponse::getDate() {
 }
 
 std::string HttpResponse::getContentType(std::string path) {
+	// text : html, php
+	// application : json
+	// image : jpg, jpeg, png
+	// video : mov, mp4
+	// audio : mp3
 	std::string extension = path.substr(path.find_last_of(".") + 1);
 	if(extension == "html")
 		return "text/html";
 	else if(extension == "php")
-		return "text/html"; // todo これ以外の可能性あり
+		return "text/html";
 	else if(extension == "json")
 		return "application/json";
+	else if(extension == "jpg")
+		return "image/jpeg";
+	else if(extension == "jpeg")
+		return "image/jpeg";
+	else if(extension == "png")
+		return "image/png";
+	else if(extension == "mov")
+		return "video/quicktime";
+	else if(extension == "mp4")
+		return "video/mp4";
+	else if(extension == "mp3")
+		return "audio/mpeg";
 	else
-		return "text/html"; // todo これ以外の可能性あり
+		return "text/html";
 }

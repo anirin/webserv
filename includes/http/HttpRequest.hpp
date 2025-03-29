@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:21 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/27 16:08:44 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/29 14:12:53 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,23 +49,23 @@ private:
 	conf_value_t conf_value_;
 
 	// parse
-	std::vector<std::string> parseRequestStartLine(std::string request);
-	std::map<std::string, std::string> parseRequestHeader(std::string request);
-	std::string parseRequestBody(std::string request);
+	std::vector<std::string> parseRequestStartLine(std::vector<char> request);
+	std::map<std::string, std::string> parseRequestHeader(std::vector<char> request);
+	std::vector<char> parseRequestBody(std::vector<char> request, std::map<std::string, std::string> headers);
 
 public:
 	// constructor
-	HttpRequest(std::string request, MainConf *mainConf);
+	HttpRequest(std::vector<char> request, MainConf *mainConf);
 	~HttpRequest();
 
 	// setter
 	void setStatusCode();
-	void setBody(std::string body);
+	void setBody(std::vector<char> body);
 
 	// getter
 	std::vector<std::string> getStartLine() const;
 	std::map<std::string, std::string> getHeader() const;
-	std::string getBody() const;
+	std::vector<char> getBody() const;
 
 	std::string getLocationPath() const;
 	Method getMethod() const;

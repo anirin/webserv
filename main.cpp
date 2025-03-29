@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/27 21:18:54 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/29 16:50:05 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,11 +25,12 @@ std::string getConfContent(char *confPath) {
 		std::stringstream buffer;
 		buffer << ifs.rdbuf();
 		std::string content = buffer.str();
+		std::cout << "[main.cpp] confPath: " << confPath << std::endl;
 		return content;
 	}
 
 	// todo 以下の項目を削除
-	std::string defaultPath = "src/config/sample/test.conf";
+	std::string defaultPath = "configs/normal_case/default.conf";
 	std::ifstream ifs(defaultPath.c_str());
 	if(!ifs) {
 		throw std::runtime_error("[main.cpp] Failed to open configuration file");
@@ -37,6 +38,7 @@ std::string getConfContent(char *confPath) {
 	std::stringstream buffer;
 	buffer << ifs.rdbuf();
 	std::string content = buffer.str();
+	std::cout << "[main.cpp] confPath: " << defaultPath << std::endl;
 	return content;
 }
 
@@ -80,7 +82,7 @@ int main(int argc, char **argv) {
 			newl = Listener(*it);
 		} catch(const std::exception &e) {
 			std::cerr << "[main.cpp] Error: Listen failed: " << e.what() << std::endl;
-			continue;
+			return 1;
 		}
 		epollWrapper.addEvent(newl.getFd());
 		listen_fds.push_back(newl.getFd());

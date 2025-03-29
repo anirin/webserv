@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:18:35 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/27 21:19:17 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/29 16:14:45 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,8 +65,8 @@ private:
 	CGI *cgi_; // dynamic file
 
 	// buffer
-	std::string rbuff_;
-	std::string wbuff_;
+	std::vector<char> rbuff_;
+	std::vector<char> wbuff_;
 
 	// request and response
 	HttpRequest *request_;
@@ -126,5 +126,11 @@ public:
 	void setChunkedBody();
 
 };
+
+// ==================================== utils ====================================
+
+std::vector<char> stringToVector(std::string str);
+
+std::string vectorToString(std::vector<char> vec);
 
 #endif

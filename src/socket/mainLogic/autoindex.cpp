@@ -86,7 +86,10 @@ void Connection::buildAutoIndexContent(std::string path) { // throw
 		 << "</html>\r\n";
 
 	closedir(dir);
-	wbuff_ = html.str();
+
+	std::string content;
+	content = html.str();
+	wbuff_ = stringToVector(content);
 
 	return;
 }

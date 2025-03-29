@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/27 21:25:55 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/03/29 16:49:17 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,15 +73,12 @@ FileTypes Connection::getFdType(int fd) const {
 void Connection::setHttpRequest(MainConf *mainConf) { // throw
 	try {
 		request_ = new HttpRequest(rbuff_, mainConf);
-	} catch(const std::exception &e) {
-		throw std::runtime_error(e.what());
-	}
+	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
 
 	try {
-		conf_value_ = mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
-	} catch(const std::exception &e) {
-		throw std::runtime_error(e.what());
-	}
+		conf_value_ =
+			mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
+	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
 	std::cout << "[connection] request is set" << std::endl;
 	// std::cout << rbuff_ << std::endl;
 
@@ -101,7 +98,8 @@ void Connection::setCGI() { // throw
 
 		Method method = request_->getMethod();
 		if(method == POST) {
-			std::string body = request_->getBody();
+			std::vector<char> body_content = request_->getBody();
+			std::string body = vectorToString(body_content);
 			std::map<std::string, std::string> headers = request_->getHeader();
 			cgi = new CGI(location_path, body, headers);
 		} else {
@@ -159,12 +157,15 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 		std::cout << "[connection] read socket closed by client" << std::endl;
 		return CLOSED;
 	} else if(rlen == buff_size) {
-		rbuff_ += buff;
+		for(ssize_t i = 0; i < buff_size; i++) {
+			rbuff_.push_back(buff[i]);
+		}
 		return NOT_COMPLETED;
 	}
 
-	buff[rlen] = '\0';
-	rbuff_ += buff;
+	for(ssize_t i = 0; i < rlen; i++) {
+		rbuff_.push_back(buff[i]);
+	}
 
 	// std::cout << "rbuff: " << rbuff_ << std::endl;
 
@@ -172,6 +173,8 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 }
 
 FileStatus Connection::readStaticFile(std::string file_path) {
+	// todo dir の時は not found でいい
+
 	std::ifstream ifs(file_path.c_str(), std::ios::binary); // バイナリモード推奨
 	if(!ifs) {
 		std::cerr << "[connection] open file failed" << std::endl;
@@ -199,13 +202,16 @@ FileStatus Connection::readCGI() {
 		cgi_->killCGI();
 		return ERROR;
 	} else if(rlen == 1023) {
-		wbuff_ += buff;
+		for(ssize_t i = 0; i < rlen; i++) {
+			wbuff_.push_back(buff[i]);
+		}
 		return NOT_COMPLETED;
 	}
 
 	buff[rlen] = '\0';
-	wbuff_ += buff;
-	// todo chunked の場合はここで処理を行う 例） wbuff_ += "0\r\n\r\n";
+	for(ssize_t i = 0; i < rlen; i++) {
+		wbuff_.push_back(buff[i]);
+	}
 
 	close(cgi_->getFd());
 	delete cgi_;
@@ -229,11 +235,12 @@ FileStatus Connection::writeSocket() {
 
 	// std::cout << wbuff_ << std::endl; // デバッグ用
 
+	// todo ここら辺のロジックがあまり理解できていない
 	ssize_t copy_len = std::min(wbuff_.size(), static_cast<std::size_t>(buff_size));
 	std::memcpy(buff, wbuff_.data(), copy_len);
 	if(copy_len != buff_size)
 		buff[copy_len] = '\0';
-	wbuff_.erase(0, copy_len);
+	wbuff_.erase(wbuff_.begin(), wbuff_.begin() + copy_len);
 	ssize_t wlen = send(fd_, buff, copy_len, 0);
 	if(wlen == -1)
 		return ERROR;
@@ -241,7 +248,7 @@ FileStatus Connection::writeSocket() {
 		return NOT_COMPLETED;
 
 	delete response_;
-	if (request_)
+	if(request_)
 		delete request_;
 	response_ = NULL;
 	request_ = NULL;
@@ -255,4 +262,15 @@ void Connection::cleanUp() {
 		delete cgi_;
 		cgi_ = NULL;
 	}
+}
+
+// util
+std::vector<char> stringToVector(std::string str) {
+	std::vector<char> vec(str.begin(), str.end());
+	return vec;
+}
+
+std::string vectorToString(std::vector<char> vec) {
+	std::string str(vec.begin(), vec.end());
+	return str;
 }

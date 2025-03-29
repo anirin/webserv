@@ -10,7 +10,7 @@ void Connection::deleteFile() {
 								"<p>File deleted successfully</p>\r\n"
 								"</body>\r\n"
 								"</html>\r\n";
-	wbuff_ = response_body;
+	wbuff_ = stringToVector(response_body);
 
 	return;
 }
