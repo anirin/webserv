@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:18:35 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 16:14:45 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/29 17:50:08 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,7 +104,7 @@ public:
 	// method
 		// file upload
 	bool isFileUpload();
-	FileStatus fileUpload();
+	FileStatus fileUpload(std::string upload_dir);
 		// autoindex
 	std::string getAutoIndexPath();
 	void buildAutoIndexContent(std::string path);

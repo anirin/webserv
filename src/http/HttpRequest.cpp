@@ -277,12 +277,7 @@ bool HttpRequest::isValidHttpMethod() {
 }
 
 bool HttpRequest::isValidPath() {
-	/* in this process, check only the existence of the requested path */
-	/* where error_page exist or not is not checked */
-	/* make requested path that is based wevserv root */
-	// todo location path のロジックは改良する必要あり autoindexの場合も考慮する必要あり
 	// configに対応している場合はlocaiton pathには値が入る。そうではない場合は空文字列が入る
-	// またautoindexがonの場合は先にautoindexの処理が入るので、そもそもgetLocationPathは呼ばれない
 	location_path_ = getLocationPath(request_path_, conf_value_);
 	if(location_path_ == "") {
 		std::cout << "[http request] invalid path" << std::endl;
@@ -313,7 +308,13 @@ std::string HttpRequest::getLocationPath(std::string request_path, conf_value_t 
 		is_directory = true;
 	if(is_directory) {
 		if(conf_value._index.size() == 0) {
-			return "." + conf_value._root + request_path;
+			location_path = "." + conf_value._root + request_path;
+			if (stat(location_path.c_str(), &st) == 0)
+				return location_path;
+			else {
+				std::cout << "[http request] dir not found" << std::endl;
+				return "";
+			}
 		}
 		for(size_t i = 0; i < conf_value._index.size(); i++) {
 			/* std::cout << "index: " << conf_value._index[i] << std::endl; */

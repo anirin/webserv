@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 16:49:17 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/29 17:48:05 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,12 +173,22 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 }
 
 FileStatus Connection::readStaticFile(std::string file_path) {
-	// todo dir の時は not found でいい
+	struct stat path_stat;
+	if (stat(file_path.c_str(), &path_stat) == 0) {
+		if (S_ISDIR(path_stat.st_mode)) {
+			std::cerr << "[connection] path is a directory" << std::endl;
+			setErrorFd(404);
+			buildStaticFileResponse(404);
+			return SUCCESS_STATIC;
+		}
+	}
 
 	std::ifstream ifs(file_path.c_str(), std::ios::binary); // バイナリモード推奨
 	if(!ifs) {
 		std::cerr << "[connection] open file failed" << std::endl;
-		return ERROR;
+		setErrorFd(500);
+		buildStaticFileResponse(500);
+		return SUCCESS_STATIC;
 	}
 
 	// ファイル全体を一度に読み込み
@@ -186,11 +196,15 @@ FileStatus Connection::readStaticFile(std::string file_path) {
 
 	if(ifs.bad()) {
 		std::cerr << "[connection] read error" << std::endl;
-		return ERROR;
+		setErrorFd(500);
+		buildStaticFileResponse(500);
+		return SUCCESS_STATIC;
 	}
 
 	ifs.close();
-	return SUCCESS;
+	buildStaticFileResponse(200);
+
+	return SUCCESS_STATIC;
 }
 
 FileStatus Connection::readCGI() {
@@ -235,7 +249,6 @@ FileStatus Connection::writeSocket() {
 
 	// std::cout << wbuff_ << std::endl; // デバッグ用
 
-	// todo ここら辺のロジックがあまり理解できていない
 	ssize_t copy_len = std::min(wbuff_.size(), static_cast<std::size_t>(buff_size));
 	std::memcpy(buff, wbuff_.data(), copy_len);
 	if(copy_len != buff_size)
@@ -264,7 +277,7 @@ void Connection::cleanUp() {
 	}
 }
 
-// util
+// ==================================== utils ====================================
 std::vector<char> stringToVector(std::string str) {
 	std::vector<char> vec(str.begin(), str.end());
 	return vec;

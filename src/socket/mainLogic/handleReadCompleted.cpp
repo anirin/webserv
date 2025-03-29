@@ -18,7 +18,6 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 
 	// client max body size check
 	// std::cout << "[connection] rbuff_ size: " << rbuff_.size() << ", " << conf_value_._client_max_body_size <<
-	// std::endl;
 	if(rbuff_.size() > conf_value_._client_max_body_size) {
 		std::cerr << "[connection] client max body size exceeded" << std::endl;
 		setHttpResponse();
@@ -61,17 +60,15 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		else {
 			std::string file_path = request_->getLocationPath();
 			std::cout << "[connection] file path: " << file_path << std::endl;
-			readStaticFile(file_path);
-			// todo error 処理がない
-			buildStaticFileResponse(200);
-			return SUCCESS_STATIC;
+			return readStaticFile(file_path);
 		}
 	} else if(method == POST) {
 		setCGI();
 		if(cgi_ != NULL) {
 			return SUCCESS_CGI;
 		} else if(isFileUpload()) {
-			return fileUpload();
+			std::string upload_dir = request_->getLocationPath();
+			return fileUpload(upload_dir);
 		} else {
 			setErrorFd(400);
 			buildStaticFileResponse(400);
