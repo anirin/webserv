@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 17:48:05 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/30 17:24:24 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -259,7 +259,6 @@ FileStatus Connection::writeSocket() {
 		return ERROR;
 	if(wlen == buff_size)
 		return NOT_COMPLETED;
-
 	delete response_;
 	if(request_)
 		delete request_;
