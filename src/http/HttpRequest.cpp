@@ -32,8 +32,29 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 
 	server_name_ = server_and_port.substr(0, pos);
 	port_ = server_and_port.substr(pos + 1);
-	// todo クエリパラメーターの処理を追加
 	request_path_ = start_line_[1];
+
+	// クエリパラメータの処理
+	size_t query_pos = request_path_.find('?');
+	if (query_pos != std::string::npos) {
+		std::string query_string = request_path_.substr(query_pos + 1);
+		request_path_ = request_path_.substr(0, query_pos);
+		
+		std::istringstream query_stream(query_string);
+		std::string param;
+		// &で区切られたパラメータを処理
+		while (std::getline(query_stream, param, '&')) {
+			size_t equals_pos = param.find('=');
+			if (equals_pos != std::string::npos) {
+				std::string key = param.substr(0, equals_pos);
+				std::string value = param.substr(equals_pos + 1);
+				query_params_[key] = value;
+			} else {
+				query_params_[param] = "";  // 値がない場合は空文字列を設定
+			}
+		}
+	}
+
 	conf_value_ = mainConf->getConfValue(port_, server_name_, request_path_);
 }
 
