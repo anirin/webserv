@@ -30,6 +30,7 @@ Connection::Connection(int listenerFd) : ASocket() { // throw
 		throw std::runtime_error("Failed to set socket to non-blocking");
 	request_ = NULL;
 	response_ = NULL;
+	cgi_ = NULL;
 	lastActive_ = std::time(NULL);
 	std::cout << "[connection] Accepted connection from sin_port = " << addr_.sin_port << std::endl;
 }
@@ -42,11 +43,16 @@ Connection::Connection(const Connection &other) : ASocket(other) {
 	wbuff_ = other.wbuff_;
 	request_ = other.request_;
 	response_ = other.response_;
+	cgi_ = other.cgi_;
 	lastActive_ = other.lastActive_;
 }
 
 Connection::~Connection() {
 	close(fd_);
+	if (cgi_ != NULL) {
+		delete cgi_;
+		cgi_ = NULL;
+	}
 }
 
 // ==================================== getter ====================================
@@ -131,6 +137,11 @@ void Connection::clearValue() {
 	delete request_;
 	response_ = NULL;
 	request_ = NULL;
+	
+	if (cgi_ != NULL) {
+		delete cgi_;
+		cgi_ = NULL;
+	}
 
 	rbuff_.clear();
 	wbuff_.clear();
@@ -215,6 +226,33 @@ FileStatus Connection::readStaticFile(std::string file_path) {
 	buildStaticFileResponse(200);
 
 	return SUCCESS_STATIC;
+}
+
+FileStatus Connection::readCGI() {
+	char buff[buff_size];
+	ssize_t rlen = read(cgi_->getFd(), buff, sizeof(buff) - 1);
+
+	if(rlen < 0) {
+		std::cerr << "[connection] read pipe failed" << std::endl;
+		cgi_->killCGI();
+		return ERROR;
+	} else if(rlen == 1023) {
+		for(ssize_t i = 0; i < rlen; i++) {
+			wbuff_.push_back(buff[i]);
+		}
+		return NOT_COMPLETED;
+	}
+
+	buff[rlen] = '\0';
+	for(ssize_t i = 0; i < rlen; i++) {
+		wbuff_.push_back(buff[i]);
+	}
+
+	close(cgi_->getFd());
+	delete cgi_;
+	cgi_ = NULL;
+
+	return SUCCESS;
 }
 
 FileStatus Connection::writeSocket() {

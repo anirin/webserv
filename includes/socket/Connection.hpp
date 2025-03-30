@@ -36,6 +36,7 @@
 #include "HttpResponse.hpp"
 #include "MainConf.hpp"
 #include "MainConf.hpp"
+#include "../cgi/CGI.hpp"
 
 enum FileTypes
 {
@@ -70,6 +71,9 @@ private:
 	
 	// conf
 	conf_value_t conf_value_;
+	
+	// cgi
+	CGI *cgi_;
 
 	// timeout
 	std::time_t lastActive_;
@@ -114,6 +118,7 @@ public:
 		// read write
 	FileStatus readStaticFile(std::string file_path);
 	FileStatus readSocket(MainConf *mainConf);
+	FileStatus readCGI();
 	FileStatus writeSocket();
 		// chunked
 	bool isChunked();
