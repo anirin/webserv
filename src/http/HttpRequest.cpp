@@ -32,6 +32,7 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 
 	server_name_ = server_and_port.substr(0, pos);
 	port_ = server_and_port.substr(pos + 1);
+	// todo クエリパラメーターの処理を追加
 	request_path_ = start_line_[1];
 	conf_value_ = mainConf->getConfValue(port_, server_name_, request_path_);
 }
