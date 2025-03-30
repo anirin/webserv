@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 17:48:05 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/30 19:04:57 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,12 +73,16 @@ FileTypes Connection::getFdType(int fd) const {
 void Connection::setHttpRequest(MainConf *mainConf) { // throw
 	try {
 		request_ = new HttpRequest(rbuff_, mainConf);
-	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
+	} catch(const std::exception &e) {
+		throw std::runtime_error(e.what());
+	}
 
 	try {
 		conf_value_ =
 			mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
-	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
+	} catch(const std::exception &e) {
+		throw std::runtime_error(e.what());
+	}
 	std::cout << "[connection] request is set" << std::endl;
 	// std::cout << rbuff_ << std::endl;
 
