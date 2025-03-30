@@ -54,19 +54,19 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	Method method = request_->getMethod();
 	// todo クエリパラメーターの処理を追加
 	if(method == GET) {
-		setCGI();
-		if(cgi_ != NULL)
-			return SUCCESS_CGI;
+		executePhpIfNeeded();
+		if(!wbuff_.empty()) // If PHP script generated output
+			return SUCCESS_STATIC;
 		else {
 			std::string file_path = request_->getLocationPath();
 			std::cout << "[connection] file path: " << file_path << std::endl;
 			return readStaticFile(file_path);
 		}
 	} else if(method == POST) {
-		setCGI();
-		if(cgi_ != NULL) {
-			return SUCCESS_CGI;
-		} else if(isFileUpload()) {
+		executePhpIfNeeded();
+		if(!wbuff_.empty()) // If PHP script generated output
+			return SUCCESS_STATIC;
+		else if(isFileUpload()) {
 			std::string upload_dir = request_->getLocationPath();
 			return fileUpload(upload_dir);
 		} else {

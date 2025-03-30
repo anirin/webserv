@@ -135,8 +135,6 @@ int main(int argc, char **argv) {
 								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 							}
 							if(file_status == SUCCESS_CGI) {
-								epollWrapper.addEvent(conn->getCGI()->getFd());
-								std::cout << "[main.cpp] CGI event add to epoll" << std::endl;
 								epollWrapper.setEvent(target_fd, EPOLLOUT);
 								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 							}
@@ -157,22 +155,7 @@ int main(int argc, char **argv) {
 						}
 						break;
 					case PIPE:
-						conn->readCGI();
-						if(file_status == ERROR) {
-							epollWrapper.deleteEvent(target_fd);
-							close(target_fd);
-							epollWrapper.deleteEvent(conn->getFd());
-							connections.removeConnection(conn->getFd());
-							close(conn->getFd());
-							std::cout << "[main.cpp] connection closed" << std::endl;
-						} else if(file_status == SUCCESS) {
-							epollWrapper.deleteEvent(target_fd);
-							close(target_fd);
-							epollWrapper.setEvent(
-								conn->getFd(),
-								EPOLLOUT); // 本来はSUCCESS後ではなく、cgi 開始した後に書き込むべき time outも考慮
-							std::cout << "[main.cpp] coection event set to EPOLLOUT" << std::endl;
-						}
+						std::cout << "[main.cpp] PIPE case should not be used with new CGI implementation" << std::endl;
 						break;
 					default:
 						break;

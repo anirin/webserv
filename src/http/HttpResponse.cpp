@@ -103,6 +103,10 @@ void HttpResponse::setStatusCode(int status_code) {
 	status_code_ = status_code;
 }
 
+void HttpResponse::addHeader(const std::string& key, const std::string& value) {
+	headers_[key] = value;
+}
+
 // ==================================== getter ====================================
 
 std::vector<std::string> HttpResponse::getStartLine() const {

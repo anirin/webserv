@@ -117,6 +117,20 @@ std::string HttpRequest::getRequestPath() const {
 	return request_path_;
 }
 
+std::string HttpRequest::getQuery() const {
+	std::string query;
+	for (std::map<std::string, std::string>::const_iterator it = query_params_.begin(); it != query_params_.end(); ++it) {
+		if (!query.empty()) {
+			query += "&";
+		}
+		query += it->first;
+		if (!it->second.empty()) {
+			query += "=" + it->second;
+		}
+	}
+	return query;
+}
+
 // ==================================== setter ====================================
 
 void HttpRequest::setBody(std::vector<char> buff) {

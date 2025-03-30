@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Connection.hpp"
+#include <errno.h>
 
 std::time_t Connection::timeout_ = 100000;
 ssize_t buff_size = 1024; // todo 持たせ方の検討
@@ -31,15 +32,12 @@ Connection::Connection(int listenerFd) : ASocket() { // throw
 	response_ = NULL;
 	lastActive_ = std::time(NULL);
 	std::cout << "[connection] Accepted connection from sin_port = " << addr_.sin_port << std::endl;
-
-	cgi_ = NULL;
 }
 
 Connection::Connection(const Connection &other) : ASocket(other) {
 	if(this == &other)
 		return;
 	fd_ = other.fd_;
-	cgi_ = other.cgi_;
 	rbuff_ = other.rbuff_;
 	wbuff_ = other.wbuff_;
 	request_ = other.request_;
@@ -57,15 +55,8 @@ int Connection::getFd() const {
 	return fd_;
 }
 
-CGI *Connection::getCGI() const {
-	return cgi_;
-}
-
-FileTypes Connection::getFdType(int fd) const {
-	if(cgi_ != NULL && fd == cgi_->getFd())
-		return PIPE;
-	else
-		return SOCKET;
+FileTypes Connection::getFdType(int) const {
+	return SOCKET;
 }
 
 // ==================================== setter ====================================
@@ -89,29 +80,48 @@ void Connection::setHttpResponse() {
 	response_ = new HttpResponse();
 }
 
-void Connection::setCGI() { // throw
+void Connection::executePhpIfNeeded() { // throw
 	std::string location_path = request_->getLocationPath();
 	int path_size = location_path.size();
 
 	if(path_size > 4 && location_path.substr(path_size - 4, 4) == ".php") {
-		CGI *cgi = NULL;
-
 		Method method = request_->getMethod();
+		std::string queryString = request_->getQuery();
+		std::string output;
+		
 		if(method == POST) {
 			std::vector<char> body_content = request_->getBody();
 			std::string body = vectorToString(body_content);
-			std::map<std::string, std::string> headers = request_->getHeader();
-			cgi = new CGI(location_path, body, headers);
+			output = executePhpScript(location_path, body, queryString, true);
 		} else {
-			cgi = new CGI(location_path);
+			output = executePhpScript(location_path, "", queryString, false);
 		}
-
-		if(cgi == NULL) {
-			std::cerr << "[connection] Failed to create CGI object" << std::endl;
-			throw std::runtime_error("Failed to create CGI object");
+		
+		// Build the HTTP response
+		setHttpResponse();
+		response_->setStatusCode(200);
+		response_->setStartLine(200);
+		
+		// Add Content-Type header if not present in the PHP output
+		if (output.find("Content-Type:") == std::string::npos && 
+		    output.find("content-type:") == std::string::npos) {
+		    response_->addHeader("Content-Type", "text/html");
 		}
-		cgi_ = cgi;
-		std::cout << "[connection] cgi is set" << std::endl;
+		
+		// Add Content-Length header
+		response_->addHeader("Content-Length", toString(output.length()));
+		
+		// Set server name and other headers
+		response_->addHeader("Server", "WebServ/1.0");
+		response_->addHeader("Date", response_->getDate());
+		
+		// Set the response body
+		response_->setBody(stringToVector(output));
+		
+		// Build the complete response
+		wbuff_ = response_->buildResponse();
+		
+		std::cout << "[connection] PHP script executed successfully" << std::endl;
 		return;
 	}
 }
@@ -207,33 +217,6 @@ FileStatus Connection::readStaticFile(std::string file_path) {
 	return SUCCESS_STATIC;
 }
 
-FileStatus Connection::readCGI() {
-	char buff[buff_size];
-	ssize_t rlen = read(cgi_->getFd(), buff, sizeof(buff) - 1);
-
-	if(rlen < 0) {
-		std::cerr << "[connection] read pipe failed" << std::endl;
-		cgi_->killCGI();
-		return ERROR;
-	} else if(rlen == 1023) {
-		for(ssize_t i = 0; i < rlen; i++) {
-			wbuff_.push_back(buff[i]);
-		}
-		return NOT_COMPLETED;
-	}
-
-	buff[rlen] = '\0';
-	for(ssize_t i = 0; i < rlen; i++) {
-		wbuff_.push_back(buff[i]);
-	}
-
-	close(cgi_->getFd());
-	delete cgi_;
-	cgi_ = NULL;
-
-	return SUCCESS;
-}
-
 FileStatus Connection::writeSocket() {
 	char buff[buff_size];
 
@@ -270,11 +253,79 @@ FileStatus Connection::writeSocket() {
 }
 
 void Connection::cleanUp() {
-	if(cgi_ != NULL && cgi_->getFd() != -1) {
-		cgi_->killCGI();
-		delete cgi_;
-		cgi_ = NULL;
-	}
+	// No CGI-related cleanup needed anymore
+}
+
+std::string Connection::executePhpScript(const std::string& scriptPath, const std::string& body, const std::string& queryString, bool isPost) {
+    int pipefd[2];
+    int stdinPipe[2];
+
+    if (pipe(pipefd) == -1 || (isPost && pipe(stdinPipe) == -1)) {
+        std::cerr << "Error creating pipe: " << strerror(errno) << std::endl;
+        return "Error creating pipe";
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        std::cerr << "Error forking: " << strerror(errno) << std::endl;
+        return "Error forking";
+    }
+
+    if (pid == 0) { // Child process
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+
+        if (isPost) {
+            close(stdinPipe[1]);
+            dup2(stdinPipe[0], STDIN_FILENO);
+            close(stdinPipe[0]);
+        }
+
+        std::string envMethod = "REQUEST_METHOD=" + std::string(isPost ? "POST" : "GET");
+        std::string envLength = "CONTENT_LENGTH=" + toString(isPost ? body.length() + 1 : 0);
+        std::string envType = "CONTENT_TYPE=" + std::string(isPost ? "application/x-www-form-urlencoded" : "none");
+        std::string envScript = "SCRIPT_NAME=" + scriptPath;
+        std::string envQuery = "QUERY_STRING=" + queryString;
+
+        char* env[] = {
+            const_cast<char*>(envMethod.c_str()),
+            const_cast<char*>(envLength.c_str()),
+            const_cast<char*>(envType.c_str()),
+            const_cast<char*>(envScript.c_str()),
+            const_cast<char*>(envQuery.c_str()),
+            NULL
+        };
+
+        char* args[] = {
+            const_cast<char*>("/usr/local/bin/php"),
+            const_cast<char*>(scriptPath.c_str()),
+            NULL
+        };
+
+        execve("/usr/local/bin/php", args, env);
+        std::cerr << "Error executing PHP: " << strerror(errno) << std::endl;
+        std::exit(1);
+    } else { // Parent process
+        close(pipefd[1]);
+        if (isPost) {
+            close(stdinPipe[0]);
+            std::string bodyWithNewline = body + "\n"; // Add newline for fgets
+            write(stdinPipe[1], bodyWithNewline.c_str(), bodyWithNewline.length());
+            close(stdinPipe[1]);
+        }
+
+        std::string output;
+        char buffer[1024];
+        ssize_t bytesRead;
+        while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
+            buffer[bytesRead] = '\0';
+            output += buffer;
+        }
+        close(pipefd[0]);
+        waitpid(pid, NULL, 0);
+        return output;
+    }
 }
 
 // ==================================== utils ====================================
@@ -286,4 +337,10 @@ std::vector<char> stringToVector(std::string str) {
 std::string vectorToString(std::vector<char> vec) {
 	std::string str(vec.begin(), vec.end());
 	return str;
+}
+
+std::string toString(size_t value) {
+    std::stringstream ss;
+    ss << value;
+    return ss.str();
 }

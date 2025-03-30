@@ -74,6 +74,7 @@ public:
 	std::string getPort() const;
 	std::string getRequestPath() const;
 	int getStatusCode();
+	std::string getQuery() const;
 
 	// checker
 	bool isValidHttpVersion();

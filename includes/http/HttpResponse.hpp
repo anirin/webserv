@@ -55,6 +55,7 @@ class HttpResponse : public AHttp
 		void setHeader(std::map<std::string, std::string> requestHeader, std::string path, std::string server_name);
 		void setBadRequestHeader();
 		void setStatusCode(int status_code);
+		void addHeader(const std::string& key, const std::string& value);
 
 		std::vector<char> buildResponse();
 
