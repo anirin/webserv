@@ -24,7 +24,9 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 		start_line_ = parseRequestStartLine(request);
 		headers_ = parseRequestHeader(request);
 		body_ = parseRequestBody(request, headers_);
-	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
+	} catch(const std::exception &e) {
+		throw std::runtime_error(e.what());
+	}
 
 	std::string server_and_port = headers_["Host"];
 	int pos = server_and_port.find(":");
@@ -71,6 +73,10 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 				query_params_[param] = ""; // 値がない場合は空文字列を設定
 			}
 		}
+	}
+
+	if (request_path_.find("..") != std::string::npos) {
+		throw std::runtime_error("Path traversal attempt detected");
 	}
 
 	conf_value_ = mainConf->getConfValue(port_, server_name_, request_path_);
