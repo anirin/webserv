@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 16:50:05 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/30 15:31:13 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,6 @@ int main(int argc, char **argv) {
 
 	// サーバーの設定
 	EpollWrapper epollWrapper(100);
-	ConnectionWrapper connections;
 
 	// ポート番号の重複を取り除く
 	std::vector<std::pair<std::string, int> > ports = mainConf.get_listens();
@@ -87,6 +86,8 @@ int main(int argc, char **argv) {
 		epollWrapper.addEvent(newl.getFd());
 		listen_fds.push_back(newl.getFd());
 	}
+
+	ConnectionWrapper connections;
 
 	/* Main loop */
 	while(true) {
