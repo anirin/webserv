@@ -66,7 +66,6 @@ int main(int argc, char **argv) {
 
 	// サーバーの設定
 	EpollWrapper epollWrapper(100);
-	ConnectionWrapper connections;
 
 	// ポート番号の重複を取り除く
 	std::vector<std::pair<std::string, int> > ports = mainConf.get_listens();
@@ -88,6 +87,8 @@ int main(int argc, char **argv) {
 		epollWrapper.addEvent(newl.getFd());
 		listen_fds.push_back(newl.getFd());
 	}
+
+	ConnectionWrapper connections;
 
 	/* Main loop */
 	while(true) {

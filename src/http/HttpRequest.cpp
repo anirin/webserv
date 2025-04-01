@@ -18,14 +18,15 @@ HttpRequest::HttpRequest() {}
 
 HttpRequest::~HttpRequest() {}
 
-// todo error handling が欲しい もしもし失敗した場合は400 bad request を返す
 HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 	start_line_.resize(3);
 	try {
 		start_line_ = parseRequestStartLine(request);
 		headers_ = parseRequestHeader(request);
 		body_ = parseRequestBody(request, headers_);
-	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
+	} catch(const std::exception &e) {
+		throw std::runtime_error(e.what());
+	}
 
 	std::string server_and_port = headers_["Host"];
 	int pos = server_and_port.find(":");
@@ -33,6 +34,51 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 	server_name_ = server_and_port.substr(0, pos);
 	port_ = server_and_port.substr(pos + 1);
 	request_path_ = start_line_[1];
+
+	// クエリパラメータの処理
+	size_t query_pos = request_path_.find('?');
+	if(query_pos != std::string::npos) {
+		std::string query_string = request_path_.substr(query_pos + 1);
+		// 空のクエリ文字列をチェック
+		if(query_string.empty()) {
+			throw std::runtime_error("Empty query string");
+		}
+
+		request_path_ = request_path_.substr(0, query_pos);
+		std::istringstream query_stream(query_string);
+		std::string param;
+		// &で区切られたパラメータを処理
+		while(std::getline(query_stream, param, '&')) {
+			// 空のパラメータをチェック
+			if(param.empty()) {
+				throw std::runtime_error("Empty parameter in query string");
+			}
+
+			size_t equals_pos = param.find('=');
+			if(equals_pos != std::string::npos) {
+				std::string key = param.substr(0, equals_pos);
+				// キーが空の場合をチェック
+				if(key.empty()) {
+					throw std::runtime_error("Empty key in query parameter");
+				}
+
+				std::string value = param.substr(equals_pos + 1);
+				// =が複数あるかチェック
+				if(param.find('=', equals_pos + 1) != std::string::npos) {
+					throw std::runtime_error("Invalid query parameter format: multiple '=' found");
+				}
+
+				query_params_[key] = value;
+			} else {
+				query_params_[param] = ""; // 値がない場合は空文字列を設定
+			}
+		}
+	}
+
+	if (request_path_.find("..") != std::string::npos) {
+		throw std::runtime_error("Path traversal attempt detected");
+	}
+
 	conf_value_ = mainConf->getConfValue(port_, server_name_, request_path_);
 }
 
@@ -109,9 +155,14 @@ std::vector<std::string> HttpRequest::parseRequestStartLine(std::vector<char> re
 std::map<std::string, std::string> HttpRequest::parseRequestHeader(std::vector<char> request) { // throw
 	std::map<std::string, std::string> header;
 
+
 	// ヘッダーの開始と終了位置を検索
 	size_t start = 0;
 	size_t end = 0;
+
+	if (request.size() < 4) {
+		throw std::runtime_error("Request too short");
+	}
 
 	// 最初の\r\nを検索（リクエストラインの終わり）
 	for(size_t i = 0; i < request.size() - 1; ++i) {
@@ -309,7 +360,7 @@ std::string HttpRequest::getLocationPath(std::string request_path, conf_value_t 
 	if(is_directory) {
 		if(conf_value._index.size() == 0) {
 			location_path = "." + conf_value._root + request_path;
-			if (stat(location_path.c_str(), &st) == 0)
+			if(stat(location_path.c_str(), &st) == 0)
 				return location_path;
 			else {
 				std::cout << "[http request] dir not found" << std::endl;
