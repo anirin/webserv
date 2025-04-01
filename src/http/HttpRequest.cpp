@@ -155,9 +155,14 @@ std::vector<std::string> HttpRequest::parseRequestStartLine(std::vector<char> re
 std::map<std::string, std::string> HttpRequest::parseRequestHeader(std::vector<char> request) { // throw
 	std::map<std::string, std::string> header;
 
+
 	// ヘッダーの開始と終了位置を検索
 	size_t start = 0;
 	size_t end = 0;
+
+	if (request.size() < 4) {
+		throw std::runtime_error("Request too short");
+	}
 
 	// 最初の\r\nを検索（リクエストラインの終わり）
 	for(size_t i = 0; i < request.size() - 1; ++i) {
