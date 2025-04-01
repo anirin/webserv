@@ -10,6 +10,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 		setHttpRequest(mainConf);
 	} catch(const std::exception &e) {
 		// 400 Bad Request の処理を行う
+		std::cerr << e.what() << std::endl;
 		std::cerr << "[connection] Failed to parse request: " << e.what() << std::endl;
 		setHttpResponse();
 		buildBadRequestResponse();
