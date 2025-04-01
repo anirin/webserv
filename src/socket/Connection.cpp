@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/30 19:04:57 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/01 13:27:09 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,6 +152,7 @@ bool Connection::isTimedOut(MainConf *mainConf) {
 // ==================================== read and write ====================================
 
 FileStatus Connection::readSocket(MainConf *mainConf) {
+	std::cout << "[connection] started to read socket" << std::endl;
 	char buff[buff_size];
 	ssize_t rlen = recv(fd_, buff, buff_size, 0);
 
@@ -170,8 +171,6 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 	for(ssize_t i = 0; i < rlen; i++) {
 		rbuff_.push_back(buff[i]);
 	}
-
-	// std::cout << "rbuff: " << rbuff_ << std::endl;
 
 	return processAfterReadCompleted(mainConf);
 }
