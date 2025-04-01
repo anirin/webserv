@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:18:35 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 17:50:08 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/02 08:07:45 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,6 @@ public:
 	FileTypes getFdType(int fd) const;
 
 	// setter
-	void setCGI();
 	void setErrorFd(int status_code);
 	void setHttpRequest(MainConf *mainConf);
 	void setHttpResponse();
@@ -102,6 +101,8 @@ public:
 	FileStatus processAfterReadCompleted(MainConf *mainConf);
 
 	// method
+		//cgi
+	void executeCGI();
 		// file upload
 	bool isFileUpload();
 	FileStatus fileUpload(std::string upload_dir);

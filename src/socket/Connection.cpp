@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/01 13:27:09 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/02 08:04:49by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,31 +93,37 @@ void Connection::setHttpResponse() {
 	response_ = new HttpResponse();
 }
 
-void Connection::setCGI() { // throw
+void Connection::executeCGI() { // throw
 	std::string location_path = request_->getLocationPath();
 	int path_size = location_path.size();
 
-	if(path_size > 4 && location_path.substr(path_size - 4, 4) == ".php") {
-		CGI *cgi = NULL;
-
-		Method method = request_->getMethod();
-		if(method == POST) {
-			std::vector<char> body_content = request_->getBody();
-			std::string body = vectorToString(body_content);
-			std::map<std::string, std::string> headers = request_->getHeader();
-			cgi = new CGI(location_path, body, headers);
-		} else {
-			cgi = new CGI(location_path);
-		}
-
-		if(cgi == NULL) {
-			std::cerr << "[connection] Failed to create CGI object" << std::endl;
-			throw std::runtime_error("Failed to create CGI object");
-		}
-		cgi_ = cgi;
-		std::cout << "[connection] cgi is set" << std::endl;
-		return;
+	if(path_size <= 4 || location_path.substr(path_size - 4, 4) != ".php") {
+		return ;
 	}
+
+	CGI *cgi = NULL;
+
+	std::string script_path = location_path;
+	std::string query_string = request_->getQueryString();
+	std::map<std::string, std::string> headers = request_->getHeader();
+	std::vector<char> body = request_->getBody();
+	// std::string body = vectorToString(body_content);
+
+	Method method = request_->getMethod();
+	if(method == POST) {
+		cgi = new CGI(location_path, body, headers);
+	} else {
+		cgi = new CGI(location_path);
+	}
+
+	if(cgi == NULL) {
+		std::cerr << "[connection] Failed to create CGI object" << std::endl;
+		throw std::runtime_error("Failed to create CGI object");
+	}
+
+	cgi_ = cgi;
+	std::cout << "[connection] cgi is set" << std::endl;
+	return;
 }
 
 void Connection::clearValue() {

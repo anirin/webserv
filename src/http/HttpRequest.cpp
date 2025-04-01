@@ -123,6 +123,17 @@ std::string HttpRequest::getRequestPath() const {
 	return request_path_;
 }
 
+std::string HttpRequest::getQueryString() const {
+	std::string query_string;
+	for(const auto &param : query_params_) {
+		if(!query_string.empty()) {
+			query_string += "&";
+		}
+		query_string += param.first + "=" + param.second;
+	}
+	return query_string;
+}
+
 // ==================================== setter ====================================
 
 void HttpRequest::setBody(std::vector<char> buff) {
