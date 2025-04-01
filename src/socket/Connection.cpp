@@ -6,8 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/30 17:24:24 by rmatsuba         ###   ########.fr       */
-/*                                                                            */
+/*   Updated: 2025/04/02 00:14:25 by rmatsuba         ###   ########.fr       */                                                             */
 /* ************************************************************************** */
 
 #include "Connection.hpp"
@@ -74,6 +73,7 @@ void Connection::setHttpRequest(MainConf *mainConf) { // throw
 	try {
 		request_ = new HttpRequest(rbuff_, mainConf);
 	} catch(const std::exception &e) {
+		//ここでエラーが発生している, telnetを使っている時
 		throw std::runtime_error(e.what());
 	}
 
@@ -162,16 +162,42 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 		std::cout << "[connection] read socket closed by client" << std::endl;
 		return CLOSED;
 	} else if(rlen == buff_size) {
-		for(ssize_t i = 0; i < buff_size; i++) {
-			rbuff_.push_back(buff[i]);
-		}
+		rbuff_.insert(rbuff_.end(), buff, buff + rlen);
+		/* for(ssize_t i = 0; i < buff_size; i++) { */
+		/* 	rbuff_.push_back(buff[i]); */
+		/* } */
 		return NOT_COMPLETED;
 	}
 
-	for(ssize_t i = 0; i < rlen; i++) {
-		rbuff_.push_back(buff[i]);
+	/* for(ssize_t i = 0; i < rlen; i++) { */
+	/* 	rbuff_.push_back(buff[i]); */
+	/* } */
+	//Getのチェック
+	rbuff_.insert(rbuff_.end(), buff, buff + rlen);
+	std::string request_str(rbuff_.begin(), rbuff_.end());
+	size_t pos = request_str.find("\r\n\r\n");
+	if(pos == std::string::npos) {
+		return NOT_COMPLETED;
 	}
-
+	//POSTの場合はContent-Lengthを見て、bodyを読み込む
+	if (request_str.find("Content-Length") != std::string::npos && request_str.find("POST") != std::string::npos) {
+		std::istringstream iss(request_str);
+		std::string line;
+		size_t content_length;
+		while (std::getline(iss, line)) {
+			if (line.find("Content-Length") != std::string::npos) {
+				std::string content_length_str = line.substr(strlen("Content-Length: "));
+				std::stringstream ss(content_length_str);
+				ss >> content_length;
+				break;
+			}
+		}
+		//トータルのサイズを計算して、まだ読み込むべきデータがあるか確認
+		size_t total_length = pos + 4 + content_length;
+		if (rbuff_.size() < total_length) {
+			return NOT_COMPLETED;
+		}
+	}
 	return processAfterReadCompleted(mainConf);
 }
 
@@ -240,7 +266,6 @@ FileStatus Connection::readCGI() {
 FileStatus Connection::writeSocket() {
 	char buff[buff_size];
 
-	std::cout << "reaching writeSocket" << std::endl;
 	/* if(!request_) { */
 	/* 	std::cerr << "[connection] No request found" << std::endl; */
 	/* 	return ERROR; */

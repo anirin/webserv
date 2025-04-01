@@ -111,10 +111,10 @@ conf_value_t MainConf::getConfValue(std::string port, std::string host, std::str
 		int port_num;
 		ss >> port_num;
 
-		// std::cout << "server_name: " << server_name << std::endl;
-		// std::cout << "server_port: " << server_port << std::endl;
-		// std::cout << "host: " << host << std::endl;
-		// std::cout << "port: " << port << std::endl;
+		/* std::cout << "server_name: " << server_name << std::endl; */
+		/* std::cout << "server_port: " << server_port << std::endl; */
+		/* std::cout << "host: " << host << std::endl; */
+		/* std::cout << "port: " << port << std::endl; */
 
 		if((server_name == "" && server_port == port_num) || (server_port == port_num && server_name == host)) {
 			try {
