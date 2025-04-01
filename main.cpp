@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/30 15:31:13 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/30 17:31:02 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ std::string getConfContent(char *confPath) {
 }
 
 int main(int argc, char **argv) {
+	signal(SIGPIPE, SIG_IGN);
 	if(argc != 1 && argc != 2) {
 		std::cerr << "./webserv {your conf path} or ./webserv" << std::endl;
 		return 1;

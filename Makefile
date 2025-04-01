@@ -1,7 +1,7 @@
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 CXXFLAGS += $(addprefix -I, $(INCLUDESUBDIR))
-DEBUGFLAGS = -g -fsanitize=address
+DEBUGFLAGS = -g -fsanitize=address -fsanitize=leak
 NAME = webserv
 SRC = $(shell find $(SRCDIR) -type f -name "*.cpp")  main.cpp
 OBJ = $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)

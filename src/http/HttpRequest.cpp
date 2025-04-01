@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 11:11:43y atsu             ###   ########.fr       */
+/*   Updated: 2025/04/02 00:14:00 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 	server_name_ = server_and_port.substr(0, pos);
 	port_ = server_and_port.substr(pos + 1);
 	request_path_ = start_line_[1];
+	std::cout << server_and_port << std::endl;
 
 	// クエリパラメータの処理
 	size_t query_pos = request_path_.find('?');
