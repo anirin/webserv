@@ -136,8 +136,6 @@ int main(int argc, char **argv) {
 								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 							}
 							if(file_status == SUCCESS_CGI) {
-								epollWrapper.addEvent(conn->getCGI()->getFd());
-								std::cout << "[main.cpp] CGI event add to epoll" << std::endl;
 								epollWrapper.setEvent(target_fd, EPOLLOUT);
 								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 							}

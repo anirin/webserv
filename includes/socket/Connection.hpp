@@ -36,7 +36,7 @@
 #include "HttpResponse.hpp"
 #include "MainConf.hpp"
 #include "MainConf.hpp"
-#include "CGI.hpp"
+#include "../cgi/CGI.hpp"
 
 enum FileTypes
 {
@@ -61,9 +61,6 @@ class Connection : public ASocket
 private:
 	Connection();
 
-	// file
-	CGI *cgi_; // dynamic file
-
 	// buffer
 	std::vector<char> rbuff_;
 	std::vector<char> wbuff_;
@@ -74,6 +71,9 @@ private:
 	
 	// conf
 	conf_value_t conf_value_;
+	
+	// cgi
+	CGI *cgi_;
 
 	// timeout
 	std::time_t lastActive_;
@@ -89,11 +89,10 @@ public:
 
 	// getter
 	int getFd() const;
-	CGI *getCGI() const;
 	FileTypes getFdType(int fd) const;
 
 	// setter
-	void setCGI();
+	void executePhpIfNeeded();
 	void setErrorFd(int status_code);
 	void setHttpRequest(MainConf *mainConf);
 	void setHttpResponse();
@@ -124,6 +123,8 @@ public:
 		// chunked
 	bool isChunked();
 	void setChunkedBody();
+		// PHP script execution
+	std::string executePhpScript(const std::string& scriptPath, const std::string& body, const std::string& queryString, bool isPost);
 
 };
 
@@ -132,5 +133,7 @@ public:
 std::vector<char> stringToVector(std::string str);
 
 std::string vectorToString(std::vector<char> vec);
+
+std::string toString(size_t value);
 
 #endif

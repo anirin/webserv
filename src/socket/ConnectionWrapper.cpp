@@ -32,8 +32,7 @@ std::vector<Connection *> ConnectionWrapper::getConnections() const {
 /* Get the connection with the given file descriptor */
 Connection *ConnectionWrapper::getConnection(int fd) const {
 	for(unsigned int i = 0; i < connections_.size(); i++) {
-		if(connections_[i]->getFd() == fd ||
-		   (connections_[i]->getCGI() != NULL && connections_[i]->getCGI()->getFd() == fd))
+		if(connections_[i]->getFd() == fd)
 			return connections_[i];
 	}
 	return NULL;
