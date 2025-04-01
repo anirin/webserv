@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:21 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 14:12:53 by atsu             ###   ########.fr       */
+/*   Updated: 2025/03/30 16:04:36 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ private:
 	std::string request_path_;
 	std::string location_path_;
 	conf_value_t conf_value_;
+	std::map<std::string, std::string> query_params_;
 
 	// parse
 	std::vector<std::string> parseRequestStartLine(std::vector<char> request);

@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/30 17:24:24 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/04/01 13:37:18 by rmatsuba         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,12 +73,16 @@ FileTypes Connection::getFdType(int fd) const {
 void Connection::setHttpRequest(MainConf *mainConf) { // throw
 	try {
 		request_ = new HttpRequest(rbuff_, mainConf);
-	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
+	} catch(const std::exception &e) {
+		throw std::runtime_error(e.what());
+	}
 
 	try {
 		conf_value_ =
 			mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
-	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
+	} catch(const std::exception &e) {
+		throw std::runtime_error(e.what());
+	}
 	std::cout << "[connection] request is set" << std::endl;
 	// std::cout << rbuff_ << std::endl;
 
@@ -148,6 +152,7 @@ bool Connection::isTimedOut(MainConf *mainConf) {
 // ==================================== read and write ====================================
 
 FileStatus Connection::readSocket(MainConf *mainConf) {
+	std::cout << "[connection] started to read socket" << std::endl;
 	char buff[buff_size];
 	ssize_t rlen = recv(fd_, buff, buff_size, 0);
 
@@ -166,8 +171,6 @@ FileStatus Connection::readSocket(MainConf *mainConf) {
 	for(ssize_t i = 0; i < rlen; i++) {
 		rbuff_.push_back(buff[i]);
 	}
-
-	// std::cout << "rbuff: " << rbuff_ << std::endl;
 
 	return processAfterReadCompleted(mainConf);
 }
