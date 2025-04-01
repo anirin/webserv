@@ -3,11 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: rmatsuba <rmatsuba@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/02 00:14:25 by rmatsuba         ###   ########.fr       */                                                             */
+/*   Created: 2025/04/02 00:48:28 by rmatsuba          #+#    #+#             */
+/*   Updated: 2025/04/02 00:48:30 by rmatsuba         ###   ########.fr       */
+/*                                                                            */
 /* ************************************************************************** */
+
 
 #include "Connection.hpp"
 
