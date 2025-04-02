@@ -60,7 +60,7 @@ void Connection::buildAutoIndexContent(std::string path) { // throw
 	while((entry = readdir(dir)) != NULL) {
 		std::string name = entry->d_name;
 
-		if(name == ".")
+		if(name == "." || name == "..")
 			continue;
 
 		std::string full_path = path;
