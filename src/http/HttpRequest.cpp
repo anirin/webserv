@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/02 00:14:00 by rmatsuba         ###   ########.fr       */
+/*   Updated: 2025/04/02 18:43:43 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,7 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 		start_line_ = parseRequestStartLine(request);
 		headers_ = parseRequestHeader(request);
 		body_ = parseRequestBody(request, headers_);
-	} catch(const std::exception &e) {
-		throw std::runtime_error(e.what());
-	}
+	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
 
 	std::string server_and_port = headers_["Host"];
 	int pos = server_and_port.find(":");
@@ -34,7 +32,15 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 	server_name_ = server_and_port.substr(0, pos);
 	port_ = server_and_port.substr(pos + 1);
 	request_path_ = start_line_[1];
-	std::cout << server_and_port << std::endl;
+	// std::cout << server_and_port << std::endl;
+
+	// unsigned int i = 0;
+	// while(i < request.size())
+	// {
+	// 	std::cout << request[i];
+	// 	i++;
+	// }
+	// std::cout << std::endl;
 
 	// クエリパラメータの処理
 	size_t query_pos = request_path_.find('?');
@@ -50,6 +56,7 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 		std::string param;
 		// &で区切られたパラメータを処理
 		while(std::getline(query_stream, param, '&')) {
+			std::cout << "start" << std::endl;
 			// 空のパラメータをチェック
 			if(param.empty()) {
 				throw std::runtime_error("Empty parameter in query string");
@@ -76,7 +83,7 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 		}
 	}
 
-	if (request_path_.find("..") != std::string::npos) {
+	if(request_path_.find("..") != std::string::npos) {
 		throw std::runtime_error("Path traversal attempt detected");
 	}
 
@@ -126,11 +133,12 @@ std::string HttpRequest::getRequestPath() const {
 
 std::string HttpRequest::getQueryString() const {
 	std::string query_string;
-	for(const auto &param : query_params_) {
+	std::map<std::string, std::string>::const_iterator it;
+	for(it = query_params_.begin(); it != query_params_.end(); ++it) {
 		if(!query_string.empty()) {
 			query_string += "&";
 		}
-		query_string += param.first + "=" + param.second;
+		query_string += it->first + "=" + it->second;
 	}
 	return query_string;
 }
@@ -167,12 +175,11 @@ std::vector<std::string> HttpRequest::parseRequestStartLine(std::vector<char> re
 std::map<std::string, std::string> HttpRequest::parseRequestHeader(std::vector<char> request) { // throw
 	std::map<std::string, std::string> header;
 
-
 	// ヘッダーの開始と終了位置を検索
 	size_t start = 0;
 	size_t end = 0;
 
-	if (request.size() < 4) {
+	if(request.size() < 4) {
 		throw std::runtime_error("Request too short");
 	}
 

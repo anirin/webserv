@@ -1,52 +1,63 @@
 <?php
+// エラー報告を有効化（デバッグ用）
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // CGI環境変数を取得
 $requestMethod = getenv('REQUEST_METHOD');
+$contentType = getenv('CONTENT_TYPE');
+$contentLength = getenv('CONTENT_LENGTH');
+$scriptName = getenv('SCRIPT_NAME');
 
-// リクエストメソッドに応じた処理
-if ($requestMethod === 'POST') {
-    // POSTの場合: stdinからbodyを1行ずつ読み取る
-    $body = '';
-    while ($line = fgets(STDIN)) {
-        $body .= $line; // 複数行対応のため連結
-    }
+header("Content-Type: text/html; charset=UTF-8");
 
-    // 環境変数の確認
-    $contentLength = getenv('CONTENT_LENGTH');
-    $contentType = getenv('CONTENT_TYPE');
+// POSTボディの取得
+$postBody = '';
+while ($line = fgets(STDIN)) {
+    $postBody .= $line;
+}
 
-    // 出力
-    echo "Request Method: $requestMethod\n";
-    echo "Content Length: $contentLength\n";
-    echo "Content Type: $contentType\n";
-    echo "Received Body: $body\n";
+// POSTデータのパース
+$postParams = [];
+if (!empty($postBody)) {
+    parse_str($postBody, $postParams);
+}
 
-    // bodyをパースして表示
-    parse_str($body, $params);
-    if (!empty($params)) {
-        echo "Parsed Parameters:\n";
-        foreach ($params as $key => $value) {
-            echo "  $key: $value\n";
-        }
-    }
-} elseif ($requestMethod === 'GET') {
-    // GETの場合: stdinは使わず、クエリストリングを取得
-    $queryString = getenv('QUERY_STRING');
+?>
+<html>
+<head>
+    <title>POST Request Test</title>
+</head>
+<body>
+    <h1>POST Request Processing</h1>
     
-    // 出力
-    echo "Request Method: $requestMethod\n";
-    echo "Content Length: 0\n"; // GETではbodyなし
-    echo "Content Type: none\n";
-    echo "Received Body: (none)\n";
+    <h2>Environment Variables:</h2>
+    <pre>
+REQUEST_METHOD: <?php echo $requestMethod; ?>
 
-    // クエリストリングをパースして表示
-    parse_str($queryString, $params);
-    if (!empty($params)) {
-        echo "Parsed Parameters:\n";
-        foreach ($params as $key => $value) {
-            echo "  $key: $value\n";
-        }
+CONTENT_TYPE: <?php echo $contentType; ?>
+
+CONTENT_LENGTH: <?php echo $contentLength; ?>
+
+SCRIPT_NAME: <?php echo $scriptName; ?>
+    </pre>
+    
+    <h2>Raw POST Body:</h2>
+    <pre><?php echo htmlspecialchars($postBody); ?></pre>
+    
+    <h2>POST Parameters:</h2>
+    <pre>
+<?php
+if (!empty($postParams)) {
+    foreach ($postParams as $key => $value) {
+        echo htmlspecialchars("$key: $value") . "\n";
     }
 } else {
-    echo "Unsupported Request Method: $requestMethod\n";
+    echo "No POST parameters available.";
 }
 ?>
+    </pre>
+    
+    <p>Processing Complete</p>
+</body>
+</html>
