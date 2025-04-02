@@ -18,7 +18,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	}
 
 	// client max body size check
-	// std::cout << "[connection] rbuff_ size: " << rbuff_.size() << ", " << conf_value_._client_max_body_size <<
+	// //std::cout << "[connection] rbuff_ size: " << rbuff_.size() << ", " << conf_value_._client_max_body_size <<
 	if(rbuff_.size() > conf_value_._client_max_body_size) {
 		std::cerr << "[connection] client max body size exceeded" << std::endl;
 		setHttpResponse();
@@ -53,20 +53,37 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	}
 
 	Method method = request_->getMethod();
-	// todo クエリパラメーターの処理を追加
 	if(method == GET) {
-		setCGI();
-		if(cgi_ != NULL)
-			return SUCCESS_CGI;
-		else {
+		if(isCGI()) {
+			std::cout << "[handle read completed] CGI is set" << std::endl;
+			try {
+				executeCGI();
+				return SUCCESS_CGI;
+			} catch(const std::exception &e) {
+				std::cerr << "[connection] CGI execution failed: " << e.what() << std::endl;
+				setHttpResponse();
+				setErrorFd(500);
+				buildStaticFileResponse(500);
+				return SUCCESS_STATIC;
+			}
+		} else {
 			std::string file_path = request_->getLocationPath();
 			std::cout << "[connection] file path: " << file_path << std::endl;
 			return readStaticFile(file_path);
 		}
 	} else if(method == POST) {
-		setCGI();
-		if(cgi_ != NULL) {
-			return SUCCESS_CGI;
+		if(isCGI()) {
+			std::cout << "[connection] CGI is set" << std::endl;
+			try {
+				executeCGI();
+				return SUCCESS_CGI;
+			} catch(const std::exception &e) {
+				std::cerr << "[connection] CGI execution failed: " << e.what() << std::endl;
+				setHttpResponse();
+				setErrorFd(500);
+				buildStaticFileResponse(500);
+				return SUCCESS_STATIC;
+			}
 		} else if(isFileUpload()) {
 			std::string upload_dir = request_->getLocationPath();
 			return fileUpload(upload_dir);

@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:21 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/30 16:04:36 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/02 08:11:28 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,7 @@ public:
 	std::vector<std::string> getStartLine() const;
 	std::map<std::string, std::string> getHeader() const;
 	std::vector<char> getBody() const;
+	std::string getQueryString() const;
 
 	std::string getLocationPath() const;
 	Method getMethod() const;

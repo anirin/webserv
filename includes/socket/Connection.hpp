@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:18:35 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/03/29 17:50:08 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/02 17:18:27 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,21 +79,23 @@ private:
 	std::time_t lastActive_;
 	static std::time_t timeout_;
 
+	bool is_timeout_;
+
 public:
 	Connection(int clinentFd);
 	Connection(const Connection &other);
 	~Connection();
 
 	// check timeout
-	bool isTimedOut(MainConf *mainConf);
+	int isTimedOut();
 
 	// getter
 	int getFd() const;
 	CGI *getCGI() const;
 	FileTypes getFdType(int fd) const;
+	bool getIsTimeout() const;
 
 	// setter
-	void setCGI();
 	void setErrorFd(int status_code);
 	void setHttpRequest(MainConf *mainConf);
 	void setHttpResponse();
@@ -102,6 +104,9 @@ public:
 	FileStatus processAfterReadCompleted(MainConf *mainConf);
 
 	// method
+		//cgi
+	bool isCGI();
+	void executeCGI();
 		// file upload
 	bool isFileUpload();
 	FileStatus fileUpload(std::string upload_dir);
