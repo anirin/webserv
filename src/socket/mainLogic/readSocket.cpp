@@ -18,7 +18,7 @@ FileStatus Connection::readSocket(MainConf* mainConf) {
 	}
 
 	rbuff_.insert(rbuff_.end(), buff, buff + rlen);
-	
+
 	// start line と header だけ読み取ろうと試みる
 	// parseできなければ not completed
 	HttpRequest request = HttpRequest();
@@ -47,7 +47,7 @@ FileStatus Connection::readSocket(MainConf* mainConf) {
 
 	// case2: chunked transfer encoding の場合
 	if(headers.find("Transfer-Encoding") != headers.end() &&
-			headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
+	   headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
 		std::cout << "[read socket] chunked transfer encoding" << std::endl;
 
 		if(!hasFinalChunk(rbuff_)) {
@@ -57,8 +57,8 @@ FileStatus Connection::readSocket(MainConf* mainConf) {
 		std::cout << "[read socket] completed (chunked)" << std::endl;
 	}
 
-	// std::cout << "rbuff_ size: " << rbuff_.size() << std::endl;
-	// std::cout << "rbuff_: [[ " << std::string(rbuff_.begin(), rbuff_.end()) << "]]" << std::endl;
+	std::cout << "rbuff_ size: " << rbuff_.size() << std::endl;
+	std::cout << "rbuff_: [[ " << std::string(rbuff_.begin(), rbuff_.end()) << "]]" << std::endl;
 
 	return processAfterReadCompleted(mainConf);
 }

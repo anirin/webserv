@@ -7,11 +7,11 @@ PORT = 8080
 
 # Chunkedリクエストを一行ずつ分割
 request_lines = [
-    "GET /empty.html HTTP/1.1\r\n",
+    "POST /empty.html HTTP/1.1\r\n",
     "Host: 127.0.0.1:8080\r\n",
     "Transfer-Encoding: chunked\r\n",
     "\r\n",  # ヘッダーの終わり
-    "4\r\n",  # 最初のチャンクのサイズ
+    "6\r\n",  # 最初のチャンクのサイズ
     "Wiki\r\n",  # 最初のチャンクの内容
     "5\r\n",  # 2番目のチャンクのサイズ
     "pedia\r\n",  # 2番目のチャンクの内容
@@ -29,8 +29,6 @@ try:
         tn.write(line.encode('ascii'))
         time.sleep(0.5)  # 0.5秒待機
     
-    # サーバーからの応答を待つ
-    time.sleep(1)
     
     # 応答を受信して表示
     response = tn.read_all().decode('ascii')

@@ -51,10 +51,12 @@ FileStatus Connection::readCGI() {
 
 	std::cout << "[read cgi] wbuff size: " << wbuff_.size() << std::endl;
 	if(!wbuff_.empty()) {
-		std::cout << "[read cgi] wbuff preview: " << std::string(wbuff_.begin(), wbuff_.begin() + std::min(wbuff_.size(), size_t(50))) << "..." << std::endl;
+		std::cout << "[read cgi] wbuff preview: "
+				  << std::string(wbuff_.begin(), wbuff_.begin() + std::min(wbuff_.size(), size_t(50))) << "..."
+				  << std::endl;
 	}
 
-		buildStaticFileResponse(200);
+	buildStaticFileResponse(200);
 	std::cout << "[read cgi] read CGI completed" << std::endl;
 	return SUCCESS;
 }
