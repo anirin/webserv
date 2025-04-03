@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 14:29:33 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/25 17:48:04 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 02:40:50 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void EpollWrapper::addEvent(int fd) {
 /* Delete given file descripter from epoll instance */
 void EpollWrapper::deleteEvent(int fd) {
 	if(epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, NULL) == -1)
-		throw std::runtime_error("Failed to delete event from epoll instance");
+		throw std::runtime_error("[epoll wrapper] Failed to delete event from epoll instance");
 }
 
 /* Wait for event */

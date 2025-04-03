@@ -9,13 +9,10 @@ FileStatus Connection::readCGI() {
 
 	if(rlen < 0) {
 		std::cerr << "[read cgi] read pipe failed" << std::endl;
-		delete cgi_;
-		cgi_ = NULL;
 		return ERROR;
 	}
 
 	// データを読み取れた場合はバッファに追加
-	std::cout << "[read cgi] read CGI: " << rlen << std::endl;
 	std::cout << "[read cgi] read CGI: " << rlen << std::endl;
 	if(rlen > 0) {
 		for(ssize_t i = 0; i < rlen; i++) {
@@ -34,8 +31,6 @@ FileStatus Connection::readCGI() {
 	} else if(result < 0) {
 		// エラー
 		std::cerr << "[read cgi] waitpid error: " << strerror(errno) << std::endl;
-		delete cgi_;
-		cgi_ = NULL;
 		return ERROR;
 	}
 
@@ -49,12 +44,12 @@ FileStatus Connection::readCGI() {
 		}
 	}
 
-	std::cout << "[read cgi] wbuff size: " << wbuff_.size() << std::endl;
-	if(!wbuff_.empty()) {
-		std::cout << "[read cgi] wbuff preview: "
-				  << std::string(wbuff_.begin(), wbuff_.begin() + std::min(wbuff_.size(), size_t(50))) << "..."
-				  << std::endl;
-	}
+	// std::cout << "[read cgi] wbuff size: " << wbuff_.size() << std::endl;
+	// if(!wbuff_.empty()) {
+	// 	std::cout << "[read cgi] wbuff preview: "
+	// 			  << std::string(wbuff_.begin(), wbuff_.begin() + std::min(wbuff_.size(), size_t(50))) << "..."
+	// 			  << std::endl;
+	// }
 
 	buildStaticFileResponse(200);
 	std::cout << "[read cgi] read CGI completed" << std::endl;
