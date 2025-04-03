@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/02 18:43:43 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/03 21:09:34 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,6 @@ HttpRequest::HttpRequest(std::vector<char> request, MainConf *mainConf) {
 		std::string param;
 		// &で区切られたパラメータを処理
 		while(std::getline(query_stream, param, '&')) {
-			std::cout << "start" << std::endl;
 			// 空のパラメータをチェック
 			if(param.empty()) {
 				throw std::runtime_error("Empty parameter in query string");

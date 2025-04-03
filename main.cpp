@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/02 18:44:43 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/03 21:11:11 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,11 +144,17 @@ int main(int argc, char **argv) {
 					case SOCKET:
 						if(current_event.events & EPOLLIN) {
 							file_status = conn->readSocket(&mainConf);
-							if(file_status == ERROR || file_status == CLOSED) {
+							if(file_status == ERROR) {
 								epollWrapper.deleteEvent(target_fd);
 								connections.removeConnection(target_fd);
 								close(target_fd);
 								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+							}
+							if(file_status == CLOSED) {
+								epollWrapper.deleteEvent(target_fd);
+								connections.removeConnection(target_fd);
+								close(target_fd);
+								std::cout << "[main.cpp] Info: connection closed by Client" << std::endl;
 							}
 							if(file_status == SUCCESS_STATIC) {
 								epollWrapper.setEvent(target_fd, EPOLLOUT);

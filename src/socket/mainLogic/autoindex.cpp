@@ -17,7 +17,6 @@ std::string getFilesystemPath(std::string request_path, std::string root_path) {
 }
 
 std::string Connection::getAutoIndexPath() { // throw
-	std::cout << "[autoindex] autoindex = " << conf_value_._autoindex << std::endl;
 	if(conf_value_._autoindex == false) {
 		return "";
 	}
