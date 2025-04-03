@@ -57,8 +57,8 @@ FileStatus Connection::readSocket(MainConf* mainConf) {
 		std::cout << "[read socket] completed (chunked)" << std::endl;
 	}
 
-	std::cout << "rbuff_ size: " << rbuff_.size() << std::endl;
-	std::cout << "rbuff_: [[ " << std::string(rbuff_.begin(), rbuff_.end()) << "]]" << std::endl;
+	// std::cout << "rbuff_ size: " << rbuff_.size() << std::endl;
+	// std::cout << "rbuff_: [[ " << std::string(rbuff_.begin(), rbuff_.end()) << "]]" << std::endl;
 
 	return processAfterReadCompleted(mainConf);
 }

@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/03 20:06:45 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 02:33:41 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,6 @@ Connection::Connection(int listenerFd) : ASocket() { // throw
 	std::cout << "[connection] Accepted connection from sin_port = " << addr_.sin_port << std::endl;
 
 	cgi_ = NULL;
-
 	is_timeout_ = false;
 }
 
@@ -49,10 +48,11 @@ Connection::Connection(const Connection &other) : ASocket(other) {
 }
 
 Connection::~Connection() {
-	// if (cgi_ != NULL) {
-	// 	delete cgi_;
-	// 	cgi_ = NULL;
-	// }
+	if (cgi_ != NULL) {
+		std::cout << "[connection] CGI is deleted" << std::endl;
+		delete cgi_;
+		cgi_ = NULL;
+	}
 	close(fd_);
 }
 
@@ -109,6 +109,12 @@ bool Connection::isCGI() {
 		return false;
 	}
 	return true;
+}
+
+void Connection::initCGI() {
+	std::cout << "[connection] CGI is initialized" << std::endl;
+	delete cgi_;
+	cgi_ = NULL;
 }
 
 void Connection::executeCGI() { // throw
@@ -192,10 +198,10 @@ int Connection::isTimedOut() {
 	}
 
 	// ケース3: EPOLLOUTの設定の場合（requestは正常に処理できたが対応できない場合）504
-	if(cgi_ != NULL) {
-		delete cgi_;
-		cgi_ = NULL;
-	}
+	// if(cgi_ != NULL) {
+	// 	delete cgi_;
+	// 	cgi_ = NULL;
+	// }
 	std::cout << "[connection] gateway timeout - sending 504" << std::endl;
 	setHttpResponse();
 	response_->setStatusCode(504);
@@ -208,10 +214,6 @@ int Connection::isTimedOut() {
 // ==================================== read and write ====================================
 
 void Connection::cleanUp() {
-	if(cgi_ != NULL && cgi_->getFd() != -1) {
-		delete cgi_;
-		cgi_ = NULL;
-	}
 }
 
 // ==================================== utils ====================================

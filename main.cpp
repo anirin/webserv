@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/03 21:11:11 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 03:31:05 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,6 +137,9 @@ int main(int argc, char **argv) {
 
 				if(!conn) {
 					std::cerr << "[main.cpp] Error: Connection not found" << std::endl;
+					epollWrapper.deleteEvent(target_fd);
+					std::cerr << "[main.cpp] Error: connection closed" << std::endl;
+					close(target_fd);
 					continue;
 				}
 				FileTypes type = conn->getFdType(target_fd);
@@ -148,7 +151,7 @@ int main(int argc, char **argv) {
 								epollWrapper.deleteEvent(target_fd);
 								connections.removeConnection(target_fd);
 								close(target_fd);
-								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+								std::cerr << "[main.cpp] Error: connection closed" << std::endl;
 							}
 							if(file_status == CLOSED) {
 								epollWrapper.deleteEvent(target_fd);
@@ -161,6 +164,7 @@ int main(int argc, char **argv) {
 								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 							}
 							if(file_status == SUCCESS_CGI) {
+								epollWrapper.deleteEvent(target_fd);
 								epollWrapper.addEvent(conn->getCGI()->getFd());
 								std::cout << "[main.cpp] CGI event add to epoll" << std::endl;
 							}
@@ -170,7 +174,7 @@ int main(int argc, char **argv) {
 								epollWrapper.deleteEvent(target_fd);
 								connections.removeConnection(target_fd);
 								close(target_fd);
-								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+								std::cerr << "[main.cpp] Error: connection closed" << std::endl;
 							}
 							if(file_status == SUCCESS) {
 								if(conn->getIsTimeout()) {
@@ -189,19 +193,19 @@ int main(int argc, char **argv) {
 						file_status = conn->readCGI();
 						if(file_status == ERROR) {
 							epollWrapper.deleteEvent(target_fd);
-							epollWrapper.deleteEvent(conn->getFd());
 							connections.removeConnection(conn->getFd());
 							close(conn->getFd());
-							std::cout << "[main.cpp] connection closed" << std::endl;
+							std::cerr << "[main.cpp] Error : connection closed at read CGI" << std::endl;
 						} else if(file_status == SUCCESS) {
 							std::cout << "[main.cpp] CGI read completed" << std::endl;
 							epollWrapper.deleteEvent(target_fd);
-							delete conn->getCGI();
+							// cgiの初期化が必要
+							conn->initCGI();
 							std::cout << "[main.cpp] connection event deleted" << std::endl;
+							epollWrapper.addEvent(conn->getFd());
 							epollWrapper.setEvent(conn->getFd(), EPOLLOUT);
 							std::cout << "[main.cpp] coection event set to EPOLLOUT" << std::endl;
 						}
-						std::cout << "[main.cpp] break from PIPE case" << std::endl;
 						break;
 					default:
 						break;

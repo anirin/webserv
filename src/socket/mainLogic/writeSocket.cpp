@@ -23,7 +23,9 @@ FileStatus Connection::writeSocket() {
 	wbuff_.erase(wbuff_.begin(), wbuff_.begin() + copy_len);
 	ssize_t wlen = send(fd_, buff, copy_len, 0);
 	if(wlen == -1)
+	{
 		return ERROR;
+	}
 	if(wlen == buff_size)
 		return NOT_COMPLETED;
 	delete response_;

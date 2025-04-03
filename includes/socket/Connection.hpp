@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:18:35 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/03 20:24:18 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 02:23:35 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,7 @@ public:
 
 	// method
 		//cgi
+	void initCGI();
 	bool isCGI();
 	void executeCGI();
 		// file upload
