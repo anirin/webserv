@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:21 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/02 08:11:28 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/03 20:08:56 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,8 +40,6 @@ enum Method
 class HttpRequest : public AHttp
 {
 private:
-	HttpRequest();
-
 	std::string server_name_;
 	std::string port_;
 	std::string request_path_;
@@ -49,12 +47,10 @@ private:
 	conf_value_t conf_value_;
 	std::map<std::string, std::string> query_params_;
 
-	// parse
-	std::vector<std::string> parseRequestStartLine(std::vector<char> request);
-	std::map<std::string, std::string> parseRequestHeader(std::vector<char> request);
-	std::vector<char> parseRequestBody(std::vector<char> request, std::map<std::string, std::string> headers);
 
 public:
+	HttpRequest();
+
 	// constructor
 	HttpRequest(std::vector<char> request, MainConf *mainConf);
 	~HttpRequest();
@@ -62,6 +58,11 @@ public:
 	// setter
 	void setStatusCode();
 	void setBody(std::vector<char> body);
+
+	// parse
+	std::vector<std::string> parseRequestStartLine(std::vector<char> request);
+	std::map<std::string, std::string> parseRequestHeader(std::vector<char> request);
+	std::vector<char> parseRequestBody(std::vector<char> request, std::map<std::string, std::string> headers);
 
 	// getter
 	std::vector<std::string> getStartLine() const;
