@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 14:29:33 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/04 02:40:50 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 13:21:12 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void EpollWrapper::addEvent(int fd) {
 	new_event.events = EPOLLIN;
 	new_event.data.fd = fd;
 	if(epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &new_event) == -1)
-		throw std::runtime_error("[epoll wrapper] epoll_ctl failed: " + std::string(strerror(errno)));
+		throw std::runtime_error("[epoll wrapper] epoll_ctl failed");
 }
 
 /* Delete given file descripter from epoll instance */

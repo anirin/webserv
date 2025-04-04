@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 14:08:59 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/02/25 17:48:13 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 13:21:21 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@
 #include <stdexcept>
 #include <vector>
 #include <unistd.h>
-#include <cerrno>
 #include <cstring>
 
 class EpollWrapper

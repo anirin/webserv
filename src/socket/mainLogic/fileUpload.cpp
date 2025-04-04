@@ -74,6 +74,11 @@ bool saveUploadFile(const std::vector<char>& body, size_t start, size_t size, co
 	}
 
 	file.write(&body[start], size);
+	if (!file) {
+		std::cerr << "[connection] Failed to write to file: " << file_path << std::endl;
+		return false;
+	}
+
 	file.close();
 	return true;
 }

@@ -30,12 +30,26 @@ FileStatus Connection::readCGI() {
 		return NOT_COMPLETED;
 	} else if(result < 0) {
 		// エラー
-		std::cerr << "[read cgi] waitpid error: " << strerror(errno) << std::endl;
+		std::cerr << "[read cgi] waitpid error" << std::endl;
 		return ERROR;
 	}
 
 	// プロセスが終了した場合
 	std::cout << "[read cgi] CGI process completed" << std::endl;
+
+	// プロセスの終了ステータスを確認
+	bool hasError = false;
+	if(WIFEXITED(status)) {
+		int exitStatus = WEXITSTATUS(status);
+		std::cout << "[read cgi] exit status: " << exitStatus << std::endl;
+		if(exitStatus != 0) {
+			std::cerr << "[read cgi] CGI process exited with non-zero status: " << exitStatus << std::endl;
+			hasError = true;
+		}
+	} else if(WIFSIGNALED(status)) {
+		std::cerr << "[read cgi] CGI process terminated by signal: " << WTERMSIG(status) << std::endl;
+		hasError = true;
+	}
 
 	// 残りのデータがあれば読み取る
 	while((rlen = read(cgi_->getFd(), buff, sizeof(buff) - 1)) > 0) {
@@ -44,14 +58,20 @@ FileStatus Connection::readCGI() {
 		}
 	}
 
-	// std::cout << "[read cgi] wbuff size: " << wbuff_.size() << std::endl;
-	// if(!wbuff_.empty()) {
-	// 	std::cout << "[read cgi] wbuff preview: "
-	// 			  << std::string(wbuff_.begin(), wbuff_.begin() + std::min(wbuff_.size(), size_t(50))) << "..."
-	// 			  << std::endl;
-	// }
+	if(rlen < 0) {
+		std::cerr << "[read cgi] read pipe error" << std::endl;
+		return ERROR;
+	}
 
-	buildStaticFileResponse(200);
+	// エラーが発生した場合は500エラーを返す
+	if(hasError) {
+		std::cerr << "[read cgi] CGI execution failed" << std::endl;
+		setErrorFd(500);
+		buildStaticFileResponse(500);
+	} else {
+		buildStaticFileResponse(200);
+	}
+
 	std::cout << "[read cgi] read CGI completed" << std::endl;
 	return SUCCESS;
 }

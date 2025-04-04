@@ -106,7 +106,7 @@ void CGI::executeScriptInChild(int pipefd[2]) {
 	env[env_strings.size()] = NULL;
 
 	// PHPスクリプトの実行
-	char* args[] = {(char*)"/usr/bin/test/php", (char*)_script_path.c_str(), NULL};
+	char* args[] = {(char*)"/usr/bin/php", (char*)_script_path.c_str(), NULL};
 	execve(args[0], args, env);
 
 	// execveが失敗した場合のクリーンアップ
