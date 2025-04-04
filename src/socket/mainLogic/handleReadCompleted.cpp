@@ -18,7 +18,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	}
 
 	// client max body size check
-	// //std::cout << "[connection] rbuff_ size: " << rbuff_.size() << ", " << conf_value_._client_max_body_size <<
+	// //// std::cout << "[connection] rbuff_ size: " << rbuff_.size() << ", " << conf_value_._client_max_body_size <<
 	if(rbuff_.size() > conf_value_._client_max_body_size) {
 		std::cerr << "[connection] client max body size exceeded" << std::endl;
 		setHttpResponse();
@@ -30,7 +30,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	// autoindex処理
 	std::string autoindex_path = getAutoIndexPath();
 	if(autoindex_path != "") {
-		std::cout << "[connection] autoindex is set" << std::endl;
+		// std::cout << "[connection] autoindex is set" << std::endl;
 		setHttpResponse();
 		buildAutoIndexContent(autoindex_path);
 		buildStaticFileResponse(200);
@@ -55,7 +55,7 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 	Method method = request_->getMethod();
 	if(method == GET) {
 		if(isCGI()) {
-			std::cout << "[handle read completed] CGI is set" << std::endl;
+			// std::cout << "[handle read completed] CGI is set" << std::endl;
 			try {
 				executeCGI();
 				return SUCCESS_CGI;
@@ -68,12 +68,12 @@ FileStatus Connection::processAfterReadCompleted(MainConf *mainConf) {
 			}
 		} else {
 			std::string file_path = request_->getLocationPath();
-			std::cout << "[connection] file path: " << file_path << std::endl;
+			// std::cout << "[connection] file path: " << file_path << std::endl;
 			return readStaticFile(file_path);
 		}
 	} else if(method == POST) {
 		if(isCGI()) {
-			std::cout << "[connection] CGI is set" << std::endl;
+			// std::cout << "[connection] CGI is set" << std::endl;
 			try {
 				executeCGI();
 				return SUCCESS_CGI;

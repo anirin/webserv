@@ -1,6 +1,5 @@
 #include "Connection.hpp"
 
-// todo 命名変更
 void Connection::setErrorFd(int status_code) {
 	if(conf_value_._error_page.empty() ||
 	   (!conf_value_._error_page.empty() &&
@@ -43,7 +42,7 @@ void Connection::setErrorFd(int status_code) {
 	// ヘッダーを書き換えて 再帰的にprocess after read
 	// completedを呼び出すと思われる（無限ループに陥らないように注意する） error page は絶対パスで指定されることにする
 	std::string error_page = conf_value_._error_page[status_code];
-	std::cout << "[connection] error_page: " << error_page << " is set" << std::endl;
+	// std::cout << "[connection] error_page: " << error_page << " is set" << std::endl;
 	readStaticFile(error_page);
 
 	return;
@@ -64,7 +63,7 @@ void Connection::buildStaticFileResponse(int status_code) {
 	response_->setHeader(r_header, path, server_name);
 
 	wbuff_ = response_->buildResponse();
-	std::cout << "[connection] response build" << std::endl;
+	// std::cout << "[connection] response build" << std::endl;
 }
 
 void Connection::buildBadRequestResponse() {
@@ -80,5 +79,5 @@ void Connection::buildBadRequestResponse() {
 	response_->setStartLine(400);
 	response_->setBadRequestHeader();
 	wbuff_ = response_->buildResponse();
-	std::cout << "[connection] bad request response build" << std::endl;
+	// std::cout << "[connection] bad request response build" << std::endl;
 }

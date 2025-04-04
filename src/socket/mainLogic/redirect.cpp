@@ -1,9 +1,8 @@
 #include "Connection.hpp"
 
 // redirectの処理の場合
-// todo error ハンドリング
 FileStatus Connection::buildRedirectResponse(int status_code, std::string redirect_path) {
-	std::cout << "[connection] building redirect response to: " << redirect_path << std::endl;
+	// std::cout << "[connection] building redirect response to: " << redirect_path << std::endl;
 
 	std::map<std::string, std::string> r_header = request_->getHeader();
 
