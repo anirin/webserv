@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>任意のURLへのPOSTリクエストテスト</title>
+</head>
+<body>
+    <h1>任意のURLへのPOSTリクエストテスト</h1>
+    <form id="postForm" method="post" target="responseFrame">
+        <label for="urlInput">送信先URL:</label>
+        <input type="url" id="urlInput" name="urlInput" required>
+        <br><br>
+        <label for="postData">送信データ:</label>
+        <input type="text" id="postData" name="postData" required>
+        <br><br>
+        <button type="submit">送信</button>
+    </form>
+    <h2>サーバーレスポンス:</h2>
+    <iframe name="responseFrame" style="width:100%; height:300px; border:1px solid #ccc;"></iframe>
+
+    <script>
+        document.getElementById('postForm').onsubmit = function(event) {
+            var url = document.getElementById('urlInput').value;
+            if (url) {
+                document.getElementById('postForm').action = url;
+            } else {
+                event.preventDefault();
+                alert('送信先URLを入力してください。');
+            }
+        };
+    </script>
+</body>
+</html>
+

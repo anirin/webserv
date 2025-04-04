@@ -19,18 +19,25 @@
       padding: 10px;
       background: #f9f9f9;
     }
-    textarea, input[type="file"] {
+    textarea {
       width: 100%;
-      margin-top: 5px;
+      height: 100px;
+      font-family: monospace;
     }
     label {
       display: block;
       margin-top: 10px;
     }
+    #imageContainer img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>HTTPメソッド テスト + ファイルアップロード</h1>
+  <h1>HTTPメソッド テスト</h1>
 
   <label for="url">URL: </label>
   <input type="text" id="url" size="50" value="http://localhost/test.php">
@@ -40,19 +47,19 @@
     <option value="application/json">application/json</option>
     <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
     <option value="text/plain">text/plain</option>
-    <option value="multipart/form-data">multipart/form-data</option>
   </select>
 
-  <label for="requestBody">POST Body (JSON, text, URL Encoded用):</label>
+  <label for="requestBody">POST Body:</label>
   <textarea id="requestBody">
 {
   "title": "foo",
-  "body": "bar"
+  "body": "bar",
+  "userId": 1
 }
   </textarea>
 
-  <label for="fileInput">ファイルを選択（画像・動画）:</label>
-  <input type="file" id="fileInput" multiple>
+  <label for="imageInput">画像を選択: </label>
+  <input type="file" id="imageInput">
 
   <br>
 
@@ -61,6 +68,7 @@
   <button onclick="sendDelete()">DELETE</button>
 
   <div id="response"></div>
+  <div id="imageContainer"></div> <!-- 画像表示用のコンテナ -->
 
   <script>
     async function sendGet() {
@@ -76,46 +84,38 @@
 
     async function sendPost() {
       const url = document.getElementById('url').value;
+      const body = document.getElementById('requestBody').value;
       const contentType = document.getElementById('contentType').value;
-      const fileInput = document.getElementById('fileInput');
-      const rawBody = document.getElementById('requestBody').value;
+      const imageInput = document.getElementById('imageInput');
+      let formData = new FormData();
 
-      let options = {
-        method: 'POST',
-        headers: {},
-      };
-
-      if (contentType === 'multipart/form-data') {
-        const formData = new FormData();
-
-        // テキストも送る
-        try {
-          const parsed = JSON.parse(rawBody);
-          for (const key in parsed) {
-            formData.append(key, parsed[key]);
-          }
-        } catch {
-          // JSONでない場合はキー名を body として送信
-          formData.append('body', rawBody);
-        }
-
-        // ファイルも追加
-        for (let i = 0; i < fileInput.files.length; i++) {
-          formData.append('files[]', fileInput.files[i]);
-        }
-
-        options.body = formData;
-
-        // fetch時にmultipart/form-dataを自動で付けさせるため Content-Type は指定しない
+      // JSON形式のデータをFormDataに追加
+      if (contentType === 'application/json') {
+        formData.append('body', body);
       } else {
-        options.headers['Content-Type'] = contentType;
-        options.body = rawBody;
+        formData.append('data', body);
+      }
+
+      // 画像ファイルが選択されている場合、FormDataに画像を追加
+      if (imageInput.files.length > 0) {
+        const imageFile = imageInput.files[0];
+        formData.append('file', imageFile);
       }
 
       try {
-        const res = await fetch(url, options);
+        const res = await fetch(url, {
+          method: 'POST',
+          body: formData
+        });
+        
+        // サーバーからのレスポンスが画像の場合はbase64で表示
         const data = await res.text();
-        showResponse(data);
+        if (res.headers.get("Content-Type").includes("image")) {
+          const base64Image = await res.text();
+          showImage(base64Image);
+        } else {
+          showResponse(data);
+        }
       } catch (err) {
         showResponse('POSTエラー: ' + err.message);
       }
@@ -136,6 +136,13 @@
 
     function showResponse(data) {
       document.getElementById('response').textContent = data;
+    }
+
+    function showImage(base64Image) {
+      const img = new Image();
+      img.src = 'data:image/jpeg;base64,' + base64Image;
+      document.getElementById('imageContainer').innerHTML = '';
+      document.getElementById('imageContainer').appendChild(img);
     }
   </script>
 </body>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>HTTPファイルアップロードテスト</title>
+</head>
+<body>
+  <h1>ファイルアップロードテスト</h1>
+
+  <form id="uploadForm">
+    <label for="uploadURL">アップロード先URL:</label><br>
+    <input type="text" id="uploadURL" placeholder="http://localhost:8080" size="50"><br><br>
+
+    <input type="file" id="fileInput" required><br><br>
+    <button type="submit">アップロード</button>
+  </form>
+
+  <h2>サーバーからのレスポンス:</h2>
+  <pre id="serverResponse" style="background:#f0f0f0; padding:1em;"></pre>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const fileInput = document.getElementById("fileInput");
+    const uploadURLInput = document.getElementById("uploadURL");
+    const responseDisplay = document.getElementById("serverResponse");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const uploadURL = uploadURLInput.value.trim();
+      if (!uploadURL) {
+        alert("アップロード先URLを入力してください。");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("ファイルを選択してください。");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file); // "file" というキーで送る
+
+      try {
+        const response = await fetch(uploadURL, {
+          method: "POST",
+          body: formData,
+        });
+
+        const text = await response.text();
+        responseDisplay.textContent = text;
+
+      } catch (error) {
+        responseDisplay.textContent = "エラーが発生しました: " + error;
+      }
+    });
+  </script>
+</body>
+</html>
+
