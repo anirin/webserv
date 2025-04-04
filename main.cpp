@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/02 18:44:43 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 17:13:08 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,6 +112,13 @@ int main(int argc, char **argv) {
 				std::cout << "[main.cpp] connection is timed out, but not closed" << std::endl;
 				epollWrapper.setEvent(conn_fd, EPOLLOUT);
 				std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
+			} else if(status == 3) {
+				std::cout << "[main.cpp] connection is timed out, but not closed" << std::endl;
+				epollWrapper.deleteEvent(conn->getCGI()->getFd());
+				conn->initCGI();
+				epollWrapper.addEvent(conn_fd);
+				epollWrapper.setEvent(conn_fd, EPOLLOUT);
+				std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 			} else {
 				std::cerr << "[main.cpp] Error: Unknown status" << std::endl;
 			}
@@ -137,6 +144,9 @@ int main(int argc, char **argv) {
 
 				if(!conn) {
 					std::cerr << "[main.cpp] Error: Connection not found" << std::endl;
+					epollWrapper.deleteEvent(target_fd);
+					std::cerr << "[main.cpp] Error: connection closed" << std::endl;
+					close(target_fd);
 					continue;
 				}
 				FileTypes type = conn->getFdType(target_fd);
@@ -144,17 +154,24 @@ int main(int argc, char **argv) {
 					case SOCKET:
 						if(current_event.events & EPOLLIN) {
 							file_status = conn->readSocket(&mainConf);
-							if(file_status == ERROR || file_status == CLOSED) {
+							if(file_status == ERROR) {
 								epollWrapper.deleteEvent(target_fd);
 								connections.removeConnection(target_fd);
 								close(target_fd);
-								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+								std::cerr << "[main.cpp] Error: connection closed" << std::endl;
+							}
+							if(file_status == CLOSED) {
+								epollWrapper.deleteEvent(target_fd);
+								connections.removeConnection(target_fd);
+								close(target_fd);
+								std::cout << "[main.cpp] Info: connection closed by Client" << std::endl;
 							}
 							if(file_status == SUCCESS_STATIC) {
 								epollWrapper.setEvent(target_fd, EPOLLOUT);
 								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 							}
 							if(file_status == SUCCESS_CGI) {
+								epollWrapper.deleteEvent(target_fd);
 								epollWrapper.addEvent(conn->getCGI()->getFd());
 								std::cout << "[main.cpp] CGI event add to epoll" << std::endl;
 							}
@@ -164,7 +181,7 @@ int main(int argc, char **argv) {
 								epollWrapper.deleteEvent(target_fd);
 								connections.removeConnection(target_fd);
 								close(target_fd);
-								std::cout << "[main.cpp] Error: connection closed" << std::endl;
+								std::cerr << "[main.cpp] Error: connection closed" << std::endl;
 							}
 							if(file_status == SUCCESS) {
 								if(conn->getIsTimeout()) {
@@ -183,19 +200,19 @@ int main(int argc, char **argv) {
 						file_status = conn->readCGI();
 						if(file_status == ERROR) {
 							epollWrapper.deleteEvent(target_fd);
-							epollWrapper.deleteEvent(conn->getFd());
 							connections.removeConnection(conn->getFd());
 							close(conn->getFd());
-							std::cout << "[main.cpp] connection closed" << std::endl;
+							std::cerr << "[main.cpp] Error : connection closed at read CGI" << std::endl;
 						} else if(file_status == SUCCESS) {
 							std::cout << "[main.cpp] CGI read completed" << std::endl;
 							epollWrapper.deleteEvent(target_fd);
-							delete conn->getCGI();
+							// cgiの初期化が必要
+							conn->initCGI();
 							std::cout << "[main.cpp] connection event deleted" << std::endl;
+							epollWrapper.addEvent(conn->getFd());
 							epollWrapper.setEvent(conn->getFd(), EPOLLOUT);
 							std::cout << "[main.cpp] coection event set to EPOLLOUT" << std::endl;
 						}
-						std::cout << "[main.cpp] break from PIPE case" << std::endl;
 						break;
 					default:
 						break;

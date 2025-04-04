@@ -89,6 +89,8 @@ void MainConf::handle_server_block(std::vector<std::string> tokens) {
 conf_value_t MainConf::getConfValue(std::string port, std::string host, std::string path) {
 	conf_value_t conf_value;
 
+	// std::cout << "host : " << host << " port : " << port << std::endl;
+
 	// conf_value init
 	conf_value._path = "";
 	conf_value._listen = std::make_pair("0.0.0.0", 80);

@@ -12,10 +12,7 @@ $scriptName = getenv('SCRIPT_NAME');
 header("Content-Type: text/html; charset=UTF-8");
 
 // POSTボディの取得
-$postBody = '';
-while ($line = fgets(STDIN)) {
-    $postBody .= $line;
-}
+$postBody = getenv('REQUEST_BODY');
 
 // POSTデータのパース
 $postParams = [];

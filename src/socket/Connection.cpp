@@ -6,14 +6,13 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/02 18:44:22 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 17:10:21 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Connection.hpp"
 
-std::time_t Connection::timeout_ = 5;
-ssize_t buff_size = 1024; // todo 持たせ方の検討
+std::time_t Connection::timeout_ = 10;
 
 // ==================================== constructor and destructor ====================================
 
@@ -33,7 +32,6 @@ Connection::Connection(int listenerFd) : ASocket() { // throw
 	std::cout << "[connection] Accepted connection from sin_port = " << addr_.sin_port << std::endl;
 
 	cgi_ = NULL;
-
 	is_timeout_ = false;
 }
 
@@ -50,10 +48,11 @@ Connection::Connection(const Connection &other) : ASocket(other) {
 }
 
 Connection::~Connection() {
-	// if (cgi_ != NULL) {
-	// 	delete cgi_;
-	// 	cgi_ = NULL;
-	// }
+	if (cgi_ != NULL) {
+		std::cout << "[connection] CGI is deleted" << std::endl;
+		delete cgi_;
+		cgi_ = NULL;
+	}
 	close(fd_);
 }
 
@@ -110,6 +109,12 @@ bool Connection::isCGI() {
 		return false;
 	}
 	return true;
+}
+
+void Connection::initCGI() {
+	std::cout << "[connection] CGI is initialized" << std::endl;
+	delete cgi_;
+	cgi_ = NULL;
 }
 
 void Connection::executeCGI() { // throw
@@ -193,201 +198,27 @@ int Connection::isTimedOut() {
 	}
 
 	// ケース3: EPOLLOUTの設定の場合（requestは正常に処理できたが対応できない場合）504
-	if(cgi_ != NULL) {
-		delete cgi_;
-		cgi_ = NULL;
-	}
+	// if(cgi_ != NULL) {
+	// 	delete cgi_;
+	// 	cgi_ = NULL;
+	// }
 	std::cout << "[connection] gateway timeout - sending 504" << std::endl;
 	setHttpResponse();
 	response_->setStatusCode(504);
 	setErrorFd(504);
 	buildStaticFileResponse(504);
 	is_timeout_ = true;
-	return 2;
+
+	if (cgi_ != NULL) {
+		return 3;
+	} else {
+		return 2;
+	}
 }
 
 // ==================================== read and write ====================================
 
-FileStatus Connection::readSocket(MainConf *mainConf) {
-	std::cout << "[connection] started to read socket" << std::endl;
-	char buff[buff_size];
-	ssize_t rlen = recv(fd_, buff, buff_size, 0);
-
-	if(rlen < 0) {
-		return ERROR;
-	} else if(rlen == 0) {
-		std::cout << "[connection] read socket closed by client" << std::endl;
-		return CLOSED;
-	} else if(rlen == buff_size) {
-		rbuff_.insert(rbuff_.end(), buff, buff + rlen);
-		/* for(ssize_t i = 0; i < buff_size; i++) { */
-		/* 	rbuff_.push_back(buff[i]); */
-		/* } */
-		return NOT_COMPLETED;
-	}
-
-	/* for(ssize_t i = 0; i < rlen; i++) { */
-	/* 	rbuff_.push_back(buff[i]); */
-	/* } */
-	// Getのチェック
-	rbuff_.insert(rbuff_.end(), buff, buff + rlen);
-	std::string request_str(rbuff_.begin(), rbuff_.end());
-	size_t pos = request_str.find("\r\n\r\n");
-	if(pos == std::string::npos) {
-		return NOT_COMPLETED;
-	}
-	// POSTの場合はContent-Lengthを見て、bodyを読み込む
-	if(request_str.find("Content-Length") != std::string::npos && request_str.find("POST") != std::string::npos) {
-		std::istringstream iss(request_str);
-		std::string line;
-		size_t content_length;
-		while(std::getline(iss, line)) {
-			if(line.find("Content-Length") != std::string::npos) {
-				std::string content_length_str = line.substr(strlen("Content-Length: "));
-				std::stringstream ss(content_length_str);
-				ss >> content_length;
-				break;
-			}
-		}
-		// トータルのサイズを計算して、まだ読み込むべきデータがあるか確認
-		size_t total_length = pos + 4 + content_length;
-		if(rbuff_.size() < total_length) {
-			return NOT_COMPLETED;
-		}
-	}
-	return processAfterReadCompleted(mainConf);
-}
-
-FileStatus Connection::readStaticFile(std::string file_path) {
-	struct stat path_stat;
-	if(stat(file_path.c_str(), &path_stat) == 0) {
-		if(S_ISDIR(path_stat.st_mode)) {
-			std::cerr << "[connection] path is a directory" << std::endl;
-			setErrorFd(404);
-			buildStaticFileResponse(404);
-			return SUCCESS_STATIC;
-		}
-	}
-
-	std::ifstream ifs(file_path.c_str(), std::ios::binary); // バイナリモード推奨
-	if(!ifs) {
-		std::cerr << "[connection] open file failed" << std::endl;
-		setErrorFd(500);
-		buildStaticFileResponse(500);
-		return SUCCESS_STATIC;
-	}
-
-	// ファイル全体を一度に読み込み
-	wbuff_.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
-
-	if(ifs.bad()) {
-		std::cerr << "[connection] read error" << std::endl;
-		setErrorFd(500);
-		buildStaticFileResponse(500);
-		return SUCCESS_STATIC;
-	}
-
-	ifs.close();
-	buildStaticFileResponse(200);
-
-	return SUCCESS_STATIC;
-}
-
-FileStatus Connection::readCGI() {
-	char buff[buff_size];
-	std::cout << "[read cgi] started to read CGI" << std::endl;
-	ssize_t rlen = read(cgi_->getFd(), buff, sizeof(buff) - 1);
-
-	if(rlen < 0) {
-		std::cerr << "[read cgi] read pipe failed" << std::endl;
-		delete cgi_;
-		cgi_ = NULL;
-		return ERROR;
-	}
-
-	// データを読み取れた場合はバッファに追加
-	std::cout << "[read cgi] read CGI: " << rlen << std::endl;
-	std::cout << "[read cgi] read CGI: " << rlen << std::endl;
-	if(rlen > 0) {
-		for(ssize_t i = 0; i < rlen; i++) {
-			wbuff_.push_back(buff[i]);
-		}
-	}
-
-	// CGIプロセスの状態を確認
-	int status;
-	pid_t result = waitpid(cgi_->getPid(), &status, WNOHANG);
-
-	if(result == 0) {
-		// プロセスがまだ実行中
-		std::cout << "[read cgi] CGI process still running" << std::endl;
-		return NOT_COMPLETED;
-	} else if(result < 0) {
-		// エラー
-		std::cerr << "[read cgi] waitpid error: " << strerror(errno) << std::endl;
-		delete cgi_;
-		cgi_ = NULL;
-		return ERROR;
-	}
-
-	// プロセスが終了した場合
-	std::cout << "[read cgi] CGI process completed" << std::endl;
-
-	// 残りのデータがあれば読み取る
-	while((rlen = read(cgi_->getFd(), buff, sizeof(buff) - 1)) > 0) {
-		for(ssize_t i = 0; i < rlen; i++) {
-			wbuff_.push_back(buff[i]);
-		}
-	}
-
-	std::cout << "[read cgi] wbuff size: " << wbuff_.size() << std::endl;
-	if(!wbuff_.empty()) {
-		std::cout << "[read cgi] wbuff preview: " << std::string(wbuff_.begin(), wbuff_.begin() + std::min(wbuff_.size(), size_t(50))) << "..." << std::endl;
-	}
-
-		buildStaticFileResponse(200);
-	std::cout << "[read cgi] read CGI completed" << std::endl;
-	return SUCCESS;
-}
-
-FileStatus Connection::writeSocket() {
-	char buff[buff_size];
-
-	/* if(!request_) { */
-	/* 	std::cerr << "[connection] No request found" << std::endl; */
-	/* 	return ERROR; */
-	/* } */
-
-	if(wbuff_.empty()) {
-		return NOT_COMPLETED;
-	}
-
-	// std::cout << " >>>>> " << wbuff_.data() << " <<<<< " << std::endl; // デバッグ用
-
-	ssize_t copy_len = std::min(wbuff_.size(), static_cast<std::size_t>(buff_size));
-	std::memcpy(buff, wbuff_.data(), copy_len);
-	if(copy_len != buff_size)
-		buff[copy_len] = '\0';
-	wbuff_.erase(wbuff_.begin(), wbuff_.begin() + copy_len);
-	ssize_t wlen = send(fd_, buff, copy_len, 0);
-	if(wlen == -1)
-		return ERROR;
-	if(wlen == buff_size)
-		return NOT_COMPLETED;
-	delete response_;
-	if(request_)
-		delete request_;
-	response_ = NULL;
-	request_ = NULL;
-	std::cout << "[connection] write socket completed" << std::endl;
-	return SUCCESS;
-}
-
 void Connection::cleanUp() {
-	if(cgi_ != NULL && cgi_->getFd() != -1) {
-		delete cgi_;
-		cgi_ = NULL;
-	}
 }
 
 // ==================================== utils ====================================

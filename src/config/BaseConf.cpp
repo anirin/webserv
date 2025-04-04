@@ -126,19 +126,12 @@ unsigned long my_stoul(const std::string& str) {
 	const char* start = str.c_str();
 	char* endptr = 0;
 
-	// errno をリセット
-	errno = 0;
-
 	// strtoul で文字列を unsigned long に変換
 	unsigned long result = std::strtoul(start, &endptr, base);
 
 	// エラーチェック
 	if(start == endptr) {
 		throw std::invalid_argument("my_stoul: no valid conversion could be performed");
-	}
-
-	if(errno == ERANGE) {
-		throw std::out_of_range("my_stoul: value out of range of unsigned long");
 	}
 
 	if(*endptr != '\0') {

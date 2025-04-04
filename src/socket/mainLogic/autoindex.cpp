@@ -17,7 +17,6 @@ std::string getFilesystemPath(std::string request_path, std::string root_path) {
 }
 
 std::string Connection::getAutoIndexPath() { // throw
-	std::cout << "[autoindex] autoindex = " << conf_value_._autoindex << std::endl;
 	if(conf_value_._autoindex == false) {
 		return "";
 	}
@@ -29,7 +28,7 @@ std::string Connection::getAutoIndexPath() { // throw
 	std::string location_path = getFilesystemPath(request_path, conf_value_._root);
 	struct stat path_stat;
 
-	if(!stat(location_path.c_str(), &path_stat) == 0 && S_ISDIR(path_stat.st_mode)) {
+	if(!(stat(location_path.c_str(), &path_stat) == 0) && S_ISDIR(path_stat.st_mode)) {
 		throw std::runtime_error("Failed to get file status");
 	}
 
