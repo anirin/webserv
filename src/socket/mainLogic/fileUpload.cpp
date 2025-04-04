@@ -74,7 +74,7 @@ bool saveUploadFile(const std::vector<char>& body, size_t start, size_t size, co
 	}
 
 	file.write(&body[start], size);
-	if (!file) {
+	if(!file) {
 		std::cerr << "[connection] Failed to write to file: " << file_path << std::endl;
 		return false;
 	}
@@ -109,17 +109,17 @@ bool Connection::isFileUpload() {
 	std::string content_type = headers["Content-Type"];
 
 	if(method == POST && content_type.find("multipart/form-data") != std::string::npos) {
-		std::cout << "[connection] Detected file upload request" << std::endl;
+		// std::cout << "[connection] Detected file upload request" << std::endl;
 		return true;
 	} else {
-		std::cout << "[connection] Not a file upload request" << std::endl;
+		// std::cout << "[connection] Not a file upload request" << std::endl;
 		return false;
 	}
 }
 
 // ファイルアップロードの処理
 FileStatus Connection::fileUpload(std::string upload_dir) {
-	std::cout << "[connection] Processing file upload" << std::endl;
+	// std::cout << "[connection] Processing file upload" << std::endl;
 
 	std::map<std::string, std::string> headers = request_->getHeader();
 	std::string content_type = headers["Content-Type"];
@@ -193,7 +193,7 @@ FileStatus Connection::fileUpload(std::string upload_dir) {
 		return SUCCESS_STATIC;
 	}
 
-	std::cout << "[connection] File content type: " << file_content_type << std::endl;
+	// std::cout << "[connection] File content type: " << file_content_type << std::endl;
 
 	// ファイル保存
 	if(!saveUploadFile(body, content_start, content_size, upload_dir, filename)) {
@@ -204,7 +204,7 @@ FileStatus Connection::fileUpload(std::string upload_dir) {
 	}
 
 	std::string file_path = upload_dir + filename;
-	std::cout << "[connection] File uploaded successfully: " << file_path << std::endl;
+	// std::cout << "[connection] File uploaded successfully: " << file_path << std::endl;
 
 	// 成功レスポンスを構築
 	std::string content = createResponseHtml(filename);

@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/04 17:13:08 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 17:29:40 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,27 +25,26 @@ std::string getConfContent(char *confPath) {
 		std::stringstream buffer;
 		buffer << ifs.rdbuf();
 		std::string content = buffer.str();
-		std::cout << "[main.cpp] confPath: " << confPath << std::endl;
+		// std::cout << "[main.cpp] confPath: " << confPath << std::endl;
 		return content;
 	}
 
-	// todo 以下の項目を削除
-	std::string defaultPath = "configs/normal_case/default.conf";
-	std::ifstream ifs(defaultPath.c_str());
-	if(!ifs) {
-		throw std::runtime_error("[main.cpp] Failed to open configuration file");
-	}
-	std::stringstream buffer;
-	buffer << ifs.rdbuf();
-	std::string content = buffer.str();
-	std::cout << "[main.cpp] confPath: " << defaultPath << std::endl;
-	return content;
+	// std::string defaultPath = "configs/normal_case/default.conf";
+	// std::ifstream ifs(defaultPath.c_str());
+	// if(!ifs) {
+	// 	throw std::runtime_error("[main.cpp] Failed to open configuration file");
+	// }
+	// std::stringstream buffer;
+	// buffer << ifs.rdbuf();
+	// std::string content = buffer.str();
+	// // std::cout << "[main.cpp] confPath: " << defaultPath << std::endl;
+	// return content;
 }
 
 int main(int argc, char **argv) {
 	signal(SIGPIPE, SIG_IGN);
-	if(argc != 1 && argc != 2) {
-		std::cerr << "./webserv {your conf path} or ./webserv" << std::endl;
+	if(argc != 2) {
+		std::cerr << "./webserv {your conf path}" << std::endl;
 		return 1;
 	}
 
@@ -102,23 +101,23 @@ int main(int argc, char **argv) {
 			if(status == 0) {
 				++it;
 			} else if(status == 1) {
-				std::cout << "[main.cpp] connection is timed out" << std::endl;
+				// std::cout << "[main.cpp] connection is timed out" << std::endl;
 				epollWrapper.deleteEvent(conn_fd);
 				connections.removeConnection(conn_fd);
 				close(conn_fd);
-				std::cout << "[main.cpp] connection closed" << std::endl;
+				// std::cout << "[main.cpp] connection closed" << std::endl;
 				break;
 			} else if(status == 2) {
-				std::cout << "[main.cpp] connection is timed out, but not closed" << std::endl;
+				// std::cout << "[main.cpp] connection is timed out, but not closed" << std::endl;
 				epollWrapper.setEvent(conn_fd, EPOLLOUT);
-				std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
+				// std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 			} else if(status == 3) {
-				std::cout << "[main.cpp] connection is timed out, but not closed" << std::endl;
+				// std::cout << "[main.cpp] connection is timed out, but not closed" << std::endl;
 				epollWrapper.deleteEvent(conn->getCGI()->getFd());
 				conn->initCGI();
 				epollWrapper.addEvent(conn_fd);
 				epollWrapper.setEvent(conn_fd, EPOLLOUT);
-				std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
+				// std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 			} else {
 				std::cerr << "[main.cpp] Error: Unknown status" << std::endl;
 			}
@@ -164,16 +163,16 @@ int main(int argc, char **argv) {
 								epollWrapper.deleteEvent(target_fd);
 								connections.removeConnection(target_fd);
 								close(target_fd);
-								std::cout << "[main.cpp] Info: connection closed by Client" << std::endl;
+								// std::cout << "[main.cpp] Info: connection closed by Client" << std::endl;
 							}
 							if(file_status == SUCCESS_STATIC) {
 								epollWrapper.setEvent(target_fd, EPOLLOUT);
-								std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
+								// std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 							}
 							if(file_status == SUCCESS_CGI) {
 								epollWrapper.deleteEvent(target_fd);
 								epollWrapper.addEvent(conn->getCGI()->getFd());
-								std::cout << "[main.cpp] CGI event add to epoll" << std::endl;
+								// std::cout << "[main.cpp] CGI event add to epoll" << std::endl;
 							}
 						} else if(current_event.events & EPOLLOUT) {
 							file_status = conn->writeSocket();
@@ -190,7 +189,7 @@ int main(int argc, char **argv) {
 									close(target_fd);
 								} else {
 									epollWrapper.setEvent(target_fd, EPOLLIN);
-									std::cout << "[main.cpp] connection event set to EPOLLIN" << std::endl;
+									// std::cout << "[main.cpp] connection event set to EPOLLIN" << std::endl;
 									conn->clearValue();
 								}
 							}
@@ -204,14 +203,13 @@ int main(int argc, char **argv) {
 							close(conn->getFd());
 							std::cerr << "[main.cpp] Error : connection closed at read CGI" << std::endl;
 						} else if(file_status == SUCCESS) {
-							std::cout << "[main.cpp] CGI read completed" << std::endl;
+							// std::cout << "[main.cpp] CGI read completed" << std::endl;
 							epollWrapper.deleteEvent(target_fd);
-							// cgiの初期化が必要
 							conn->initCGI();
-							std::cout << "[main.cpp] connection event deleted" << std::endl;
+							// std::cout << "[main.cpp] connection event deleted" << std::endl;
 							epollWrapper.addEvent(conn->getFd());
 							epollWrapper.setEvent(conn->getFd(), EPOLLOUT);
-							std::cout << "[main.cpp] coection event set to EPOLLOUT" << std::endl;
+							// std::cout << "[main.cpp] coection event set to EPOLLOUT" << std::endl;
 						}
 						break;
 					default:

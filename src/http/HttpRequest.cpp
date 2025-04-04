@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/16 18:19:08 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/03 21:09:34 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 17:26:43 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -324,7 +324,7 @@ bool HttpRequest::isValidHttpVersion() {
 	std::string version = start_line_[2];
 
 	if(version != "HTTP/1.1") {
-		std::cout << "[http request] invalid http version" << std::endl;
+		// std::cout << "[http request] invalid http version" << std::endl;
 		return false;
 	}
 	return true;
@@ -339,7 +339,7 @@ bool HttpRequest::isValidHttpMethod() {
 		return true;
 
 	if(std::find(limit_except.begin(), limit_except.end(), method) == limit_except.end()) {
-		std::cout << "[http request] invalid http method" << std::endl;
+		// std::cout << "[http request] invalid http method" << std::endl;
 		return false;
 	}
 	return true;
@@ -349,7 +349,7 @@ bool HttpRequest::isValidPath() {
 	// configに対応している場合はlocaiton pathには値が入る。そうではない場合は空文字列が入る
 	location_path_ = getLocationPath(request_path_, conf_value_);
 	if(location_path_ == "") {
-		std::cout << "[http request] invalid path" << std::endl;
+		// std::cout << "[http request] invalid path" << std::endl;
 		return false;
 	}
 	return true;
@@ -371,7 +371,7 @@ std::string HttpRequest::getLocationPath(std::string request_path, conf_value_t 
 	std::string location_path;
 	struct stat st;
 	/* if request_path is directory, check the existence of index file */
-	std::cout << "[http request] request_path: " << request_path << std::endl;
+	// std::cout << "[http request] request_path: " << request_path << std::endl;
 	bool is_directory = false;
 	if(request_path[request_path.size() - 1] == '/')
 		is_directory = true;
@@ -381,7 +381,7 @@ std::string HttpRequest::getLocationPath(std::string request_path, conf_value_t 
 			if(stat(location_path.c_str(), &st) == 0)
 				return location_path;
 			else {
-				std::cout << "[http request] dir not found" << std::endl;
+				// std::cout << "[http request] dir not found" << std::endl;
 				return "";
 			}
 		}
@@ -391,15 +391,15 @@ std::string HttpRequest::getLocationPath(std::string request_path, conf_value_t 
 			if(index_path[0] == '/')
 				index_path = index_path.substr(1);
 			location_path = "." + conf_value._root + request_path + index_path;
-			std::cout << "[http request] location_path: " << location_path << std::endl;
+			// std::cout << "[http request] location_path: " << location_path << std::endl;
 			if(stat(location_path.c_str(), &st) == 0)
 				return location_path;
 		}
 	} else {
 		location_path = "." + conf_value._root + request_path;
-		std::cout << "[http request] location_path: " << location_path << std::endl;
+		// std::cout << "[http request] location_path: " << location_path << std::endl;
 		if(stat(location_path.c_str(), &st) == 0)
 			return location_path;
 	}
-	return ""; // todo throwの方がいいかも？
+	return "";
 }

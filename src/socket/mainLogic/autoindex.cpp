@@ -1,7 +1,6 @@
 #include "Connection.hpp"
 
 // autoindexの場合の処理
-// todo location path と被る部分がある
 std::string getFilesystemPath(std::string request_path, std::string root_path) {
 	std::string ret;
 

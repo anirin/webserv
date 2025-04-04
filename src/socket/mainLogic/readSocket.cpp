@@ -1,16 +1,16 @@
 #include "Connection.hpp"
 
 FileStatus Connection::readSocket(MainConf* mainConf) {
-	ssize_t buff_size = 1024; // todo 持たせ方の検討
+	ssize_t buff_size = 1024;
 
-	std::cout << "[read socket] started to read socket" << std::endl;
+	// std::cout << "[read socket] started to read socket" << std::endl;
 	char buff[buff_size];
 	ssize_t rlen = recv(fd_, buff, buff_size, 0);
 
 	if(rlen < 0) {
 		return ERROR;
 	} else if(rlen == 0) {
-		std::cout << "[read socket] read socket closed by client" << std::endl;
+		// std::cout << "[read socket] read socket closed by client" << std::endl;
 		return CLOSED;
 	} else if(rlen == buff_size) {
 		rbuff_.insert(rbuff_.end(), buff, buff + rlen);
@@ -35,26 +35,26 @@ FileStatus Connection::readSocket(MainConf* mainConf) {
 		std::istringstream iss(headers["Content-Length"]);
 		size_t content_length;
 		iss >> content_length;
-		std::cout << "[read socket] content length: " << content_length << std::endl;
+		// std::cout << "[read socket] content length: " << content_length << std::endl;
 
 		// header より下の部分にある文字数をカウント
 		if(getBodyLength(rbuff_) < content_length) {
-			std::cout << "[read socket] not completed" << std::endl;
+			// std::cout << "[read socket] not completed" << std::endl;
 			return NOT_COMPLETED;
 		}
-		std::cout << "[read socket] completed" << std::endl;
+		// std::cout << "[read socket] completed" << std::endl;
 	}
 
 	// case2: chunked transfer encoding の場合
 	if(headers.find("Transfer-Encoding") != headers.end() &&
 	   headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
-		std::cout << "[read socket] chunked transfer encoding" << std::endl;
+		// std::cout << "[read socket] chunked transfer encoding" << std::endl;
 
 		if(!hasFinalChunk(rbuff_)) {
-			std::cout << "[read socket] not completed (no final chunk)" << std::endl;
+			// std::cout << "[read socket] not completed (no final chunk)" << std::endl;
 			return NOT_COMPLETED;
 		}
-		std::cout << "[read socket] completed (chunked)" << std::endl;
+		// std::cout << "[read socket] completed (chunked)" << std::endl;
 	}
 
 	// std::cout << "rbuff_ size: " << rbuff_.size() << std::endl;

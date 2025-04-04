@@ -1,14 +1,9 @@
 #include "Connection.hpp"
 
 FileStatus Connection::writeSocket() {
-	ssize_t buff_size = 1024; // todo 持たせ方の検討
+	ssize_t buff_size = 1024;
 
 	char buff[buff_size];
-
-	/* if(!request_) { */
-	/* 	std::cerr << "[connection] No request found" << std::endl; */
-	/* 	return ERROR; */
-	/* } */
 
 	if(wbuff_.empty()) {
 		return NOT_COMPLETED;
@@ -22,8 +17,7 @@ FileStatus Connection::writeSocket() {
 		buff[copy_len] = '\0';
 	wbuff_.erase(wbuff_.begin(), wbuff_.begin() + copy_len);
 	ssize_t wlen = send(fd_, buff, copy_len, 0);
-	if(wlen == -1)
-	{
+	if(wlen == -1) {
 		return ERROR;
 	}
 	if(wlen == buff_size)
@@ -33,6 +27,6 @@ FileStatus Connection::writeSocket() {
 		delete request_;
 	response_ = NULL;
 	request_ = NULL;
-	std::cout << "[connection] write socket completed" << std::endl;
+	// std::cout << "[connection] write socket completed" << std::endl;
 	return SUCCESS;
 }

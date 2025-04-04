@@ -131,7 +131,6 @@ void LocConf::set_return(std::vector<std::string> tokens) {
 		throw std::runtime_error("return status code is invalid");
 	} catch(std::out_of_range &e) { throw std::runtime_error("return status code is invalid"); }
 
-	// todo ないものを選んだ時にどうするのか
 	if(status_code < 200 || status_code > 599) {
 		throw std::runtime_error("return status code is invalid");
 	}

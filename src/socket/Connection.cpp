@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/04 17:10:21 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 17:26:43 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ Connection::Connection(int listenerFd) : ASocket() { // throw
 	request_ = NULL;
 	response_ = NULL;
 	lastActive_ = std::time(NULL);
-	std::cout << "[connection] Accepted connection from sin_port = " << addr_.sin_port << std::endl;
+	// std::cout << "[connection] Accepted connection from sin_port = " << addr_.sin_port << std::endl;
 
 	cgi_ = NULL;
 	is_timeout_ = false;
@@ -48,8 +48,8 @@ Connection::Connection(const Connection &other) : ASocket(other) {
 }
 
 Connection::~Connection() {
-	if (cgi_ != NULL) {
-		std::cout << "[connection] CGI is deleted" << std::endl;
+	if(cgi_ != NULL) {
+		// std::cout << "[connection] CGI is deleted" << std::endl;
 		delete cgi_;
 		cgi_ = NULL;
 	}
@@ -91,7 +91,7 @@ void Connection::setHttpRequest(MainConf *mainConf) { // throw
 		conf_value_ =
 			mainConf->getConfValue(request_->getPort(), request_->getServerName(), request_->getRequestPath());
 	} catch(const std::exception &e) { throw std::runtime_error(e.what()); }
-	std::cout << "[connection] request is set" << std::endl;
+	// std::cout << "[connection] request is set" << std::endl;
 	//  std::cout << rbuff_ << std::endl;
 
 	// mainConf->debug_print_conf_value(conf_value_);
@@ -112,7 +112,7 @@ bool Connection::isCGI() {
 }
 
 void Connection::initCGI() {
-	std::cout << "[connection] CGI is initialized" << std::endl;
+	// std::cout << "[connection] CGI is initialized" << std::endl;
 	delete cgi_;
 	cgi_ = NULL;
 }
@@ -146,7 +146,7 @@ void Connection::executeCGI() { // throw
 	}
 
 	cgi_ = cgi;
-	std::cout << "[connection] CGI is set, fd=" << cgi_->getFd() << std::endl;
+	// std::cout << "[connection] CGI is set, fd=" << cgi_->getFd() << std::endl;
 	return;
 }
 
@@ -166,7 +166,7 @@ void Connection::clearValue() {
 
 int Connection::isTimedOut() {
 	if(is_timeout_) {
-		std::cout << "[connection] already timed out" << std::endl;
+		// std::cout << "[connection] already timed out" << std::endl;
 		return 0;
 	}
 
@@ -176,19 +176,19 @@ int Connection::isTimedOut() {
 		return 0;
 	}
 
-	std::cout << "[connection] time out" << std::endl;
+	// std::cout << "[connection] time out" << std::endl;
 
 	// ケース1: keep alive の待ち時間でtime outする場合
 	// 単に切断する（status code は出さない）
 	if(request_ == NULL && rbuff_.empty()) {
-		std::cout << "[connection] keep-alive timeout - closing connection" << std::endl;
+		// std::cout << "[connection] keep-alive timeout - closing connection" << std::endl;
 		is_timeout_ = true;
 		return 1;
 	}
 
 	// ケース2: request が長時間かけて送られる場合 408 Request Timeout
 	if(request_ == NULL && !rbuff_.empty()) {
-		std::cout << "[connection] request timeout - sending 408" << std::endl;
+		// std::cout << "[connection] request timeout - sending 408" << std::endl;
 		setHttpResponse();
 		response_->setStatusCode(408);
 		setErrorFd(408);
@@ -202,14 +202,14 @@ int Connection::isTimedOut() {
 	// 	delete cgi_;
 	// 	cgi_ = NULL;
 	// }
-	std::cout << "[connection] gateway timeout - sending 504" << std::endl;
+	// std::cout << "[connection] gateway timeout - sending 504" << std::endl;
 	setHttpResponse();
 	response_->setStatusCode(504);
 	setErrorFd(504);
 	buildStaticFileResponse(504);
 	is_timeout_ = true;
 
-	if (cgi_ != NULL) {
+	if(cgi_ != NULL) {
 		return 3;
 	} else {
 		return 2;
@@ -218,8 +218,7 @@ int Connection::isTimedOut() {
 
 // ==================================== read and write ====================================
 
-void Connection::cleanUp() {
-}
+void Connection::cleanUp() {}
 
 // ==================================== utils ====================================
 std::vector<char> stringToVector(std::string str) {

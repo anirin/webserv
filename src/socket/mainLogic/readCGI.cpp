@@ -1,10 +1,10 @@
 #include "Connection.hpp"
 
 FileStatus Connection::readCGI() {
-	ssize_t buff_size = 1024; // todo 持たせ方の検討
+	ssize_t buff_size = 1024;
 
 	char buff[buff_size];
-	std::cout << "[read cgi] started to read CGI" << std::endl;
+	// std::cout << "[read cgi] started to read CGI" << std::endl;
 	ssize_t rlen = read(cgi_->getFd(), buff, sizeof(buff) - 1);
 
 	if(rlen < 0) {
@@ -13,7 +13,7 @@ FileStatus Connection::readCGI() {
 	}
 
 	// データを読み取れた場合はバッファに追加
-	std::cout << "[read cgi] read CGI: " << rlen << std::endl;
+	// std::cout << "[read cgi] read CGI: " << rlen << std::endl;
 	if(rlen > 0) {
 		for(ssize_t i = 0; i < rlen; i++) {
 			wbuff_.push_back(buff[i]);
@@ -26,7 +26,7 @@ FileStatus Connection::readCGI() {
 
 	if(result == 0) {
 		// プロセスがまだ実行中
-		std::cout << "[read cgi] CGI process still running" << std::endl;
+		// std::cout << "[read cgi] CGI process still running" << std::endl;
 		return NOT_COMPLETED;
 	} else if(result < 0) {
 		// エラー
@@ -35,13 +35,13 @@ FileStatus Connection::readCGI() {
 	}
 
 	// プロセスが終了した場合
-	std::cout << "[read cgi] CGI process completed" << std::endl;
+	// std::cout << "[read cgi] CGI process completed" << std::endl;
 
 	// プロセスの終了ステータスを確認
 	bool hasError = false;
 	if(WIFEXITED(status)) {
 		int exitStatus = WEXITSTATUS(status);
-		std::cout << "[read cgi] exit status: " << exitStatus << std::endl;
+		// std::cout << "[read cgi] exit status: " << exitStatus << std::endl;
 		if(exitStatus != 0) {
 			std::cerr << "[read cgi] CGI process exited with non-zero status: " << exitStatus << std::endl;
 			hasError = true;
@@ -72,6 +72,6 @@ FileStatus Connection::readCGI() {
 		buildStaticFileResponse(200);
 	}
 
-	std::cout << "[read cgi] read CGI completed" << std::endl;
+	// std::cout << "[read cgi] read CGI completed" << std::endl;
 	return SUCCESS;
 }
