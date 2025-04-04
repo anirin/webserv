@@ -95,22 +95,23 @@ void CGI::executeScriptInChild(int pipefd[2]) {
 	env_strings.push_back("SCRIPT_NAME=" + _script_path);
 	env_strings.push_back("SCRIPT_FILENAME=" + _script_path);
 	env_strings.push_back("QUERY_STRING=" + _query_string);
-	env_strings.push_back("REDIRECT_STATUS=200"); // PHPがCGIモードで動作するために必要
 
 	// 環境変数配列の作成
 	char** env = new char*[env_strings.size() + 1];
 	for(size_t i = 0; i < env_strings.size(); i++) {
-		env[i] = strdup(env_strings[i].c_str());
+		// strdupはmallocを使うため、new[]を使った実装に置き換え
+		env[i] = new char[env_strings[i].length() + 1];
+		std::strcpy(env[i], env_strings[i].c_str());
 	}
 	env[env_strings.size()] = NULL;
 
 	// PHPスクリプトの実行
-	char* args[] = {(char*)"/usr/bin/php", (char*)_script_path.c_str(), NULL};
+	char* args[] = {(char*)"/usr/bin/test/php", (char*)_script_path.c_str(), NULL};
 	execve(args[0], args, env);
 
 	// execveが失敗した場合のクリーンアップ
 	for(size_t i = 0; i < env_strings.size(); i++) {
-		free(env[i]);
+		delete[] env[i]; // 配列なのでdelete[]を使用
 	}
 	delete[] env;
 

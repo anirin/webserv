@@ -7,7 +7,7 @@ PORT = 8080
 
 # Chunkedリクエストを一行ずつ分割
 request_lines = [
-    "POST /empty.html HTTP/1.1\r\n",
+    "GET /empty.html HTTP/1.1\r\n",
     "Host: 127.0.0.1:8080\r\n",
     "Transfer-Encoding: chunked\r\n",
     "\r\n",  # ヘッダーの終わり
@@ -16,6 +16,7 @@ request_lines = [
     "5\r\n",  # 2番目のチャンクのサイズ
     "pedia\r\n",  # 2番目のチャンクの内容
     "0\r\n",  # 最後のチャンク（終了）
+    "\r\n",  # 最後のチャンク（終了）
 ]
 
 try:
