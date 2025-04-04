@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:25:14 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/04 02:33:41 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 17:10:21 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,7 +208,12 @@ int Connection::isTimedOut() {
 	setErrorFd(504);
 	buildStaticFileResponse(504);
 	is_timeout_ = true;
-	return 2;
+
+	if (cgi_ != NULL) {
+		return 3;
+	} else {
+		return 2;
+	}
 }
 
 // ==================================== read and write ====================================
