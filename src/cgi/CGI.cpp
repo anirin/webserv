@@ -56,20 +56,6 @@ void CGI::executeScriptInChild(int pipefd[2]) {
 
 	// POSTメソッドの場合、標準入力にボディデータを設定
 	bool isPost = !_body.empty();
-	if(isPost) {
-		int stdin_pipe[2];
-		if(pipe(stdin_pipe) == -1)
-			throw std::runtime_error("[cgi] stdin pipe failed");
-
-		// 重要: POSTデータに改行を追加（fgetsが行単位で読むため）
-		std::string body_str(reinterpret_cast<char*>(&_body[0]), _body.size());
-		body_str += "\n";
-		write(stdin_pipe[1], body_str.c_str(), body_str.length());
-		close(stdin_pipe[1]);
-
-		dup2(stdin_pipe[0], STDIN_FILENO);
-		close(stdin_pipe[0]);
-	}
 
 	// 環境変数の設定 - 必要最小限のものだけに簡略化
 	std::vector<std::string> env_strings;
@@ -86,6 +72,13 @@ void CGI::executeScriptInChild(int pipefd[2]) {
 		} else {
 			env_strings.push_back("CONTENT_TYPE=application/x-www-form-urlencoded");
 		}
+
+		if (_body.size() > 1024) {
+			env_strings.push_back("REQUEST_BODY=" + std::string(_body.begin(), _body.begin() + 1024));
+		} else {
+			env_strings.push_back("REQUEST_BODY=" + std::string(_body.begin(), _body.end()));
+		}
+
 	} else {
 		env_strings.push_back("REQUEST_METHOD=GET");
 		env_strings.push_back("CONTENT_LENGTH=0");
