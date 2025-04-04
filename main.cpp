@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 13:49:54 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/04 03:31:05 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 17:13:08 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,6 +110,13 @@ int main(int argc, char **argv) {
 				break;
 			} else if(status == 2) {
 				std::cout << "[main.cpp] connection is timed out, but not closed" << std::endl;
+				epollWrapper.setEvent(conn_fd, EPOLLOUT);
+				std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
+			} else if(status == 3) {
+				std::cout << "[main.cpp] connection is timed out, but not closed" << std::endl;
+				epollWrapper.deleteEvent(conn->getCGI()->getFd());
+				conn->initCGI();
+				epollWrapper.addEvent(conn_fd);
 				epollWrapper.setEvent(conn_fd, EPOLLOUT);
 				std::cout << "[main.cpp] connection event set to EPOLLOUT" << std::endl;
 			} else {
