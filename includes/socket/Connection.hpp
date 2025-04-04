@@ -6,7 +6,7 @@
 /*   By: atsu <atsu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/13 11:18:35 by rmatsuba          #+#    #+#             */
-/*   Updated: 2025/04/04 02:23:35 by atsu             ###   ########.fr       */
+/*   Updated: 2025/04/04 13:21:28 by atsu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 
 #include <ctime>
 #include <string>
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctime>
